@@ -5,6 +5,7 @@ from rest_framework.response import Response
 from rest_framework import  generics, permissions, status
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
+from django.db.models import Avg
 
 
 class BotList(generics.GenericAPIView):
@@ -80,6 +81,19 @@ class UserTg(generics.GenericAPIView):
         return Response({"user": serializer.data})
 
 
+class Likes(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.LikesSerializer
+    queryset = models.BotLike.objects.filter()
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get(self,  request, *args, **kwargs):
+        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        query_set = self.queryset.filter(bot=bot)
+        serializer = serializers.LikesSerializer(query_set, many=True, context={'request': request})
+        return Response({"likes": serializer.data, "count": len(query_set)})
+
+
 class LikeView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
@@ -96,21 +110,27 @@ class LikeView(generics.CreateAPIView):
             models.BotLike.objects.create(user=user_tg, bot=bot)
             return Response("OK")
 
-
-class UnlikeView(LikeView):
-    permission_classes = [permissions.AllowAny]
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def post(self, request, *args, **kwargs):
+    def delete(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
         bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
         try:
             like = models.BotLike.objects.get(user=user_tg, bot=bot)
             like.delete()
+            return Response("delete")
+
         except models.BotLike.DoesNotExist:
-            return Response({"message": "Bot not like"}, status=status.HTTP_400_BAD_REQUEST)
-        return Response()
+            return Response("Bot not like")
+
+
+class Ratings(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    queryset = models.BotRating.objects.filter()
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get(self,  request, *args, **kwargs):
+        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        rating = self.queryset.filter(bot=bot).aggregate(Avg('rating'))['rating__avg']
+        return Response({"rating": rating})
 
 
 class RaitingView(LikeView):
@@ -149,6 +169,20 @@ class RaitingView(LikeView):
             return Response("Delete rating")
         except models.BotRating.DoesNotExist:
             return Response("Raiting not exist")
+
+
+
+class Comments(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.CommentsSerializer
+    queryset = models.BotComment.objects.filter()
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get(self,  request, *args, **kwargs):
+        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        query_set = self.queryset.filter(bot=bot)
+        serializer = serializers.CommentsSerializer(query_set, many=True, context={'request': request})
+        return Response({"comments": serializer.data, "count": len(query_set)})
 
 
 class CommentView(LikeView):

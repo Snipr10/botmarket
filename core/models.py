@@ -18,6 +18,12 @@ class UserTg(models.Model):
     is_ban = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
 
+    def __str__(self):
+        return {"user_id": self.user_id,
+               "first_name": self.first_name,
+               "last_name": self.last_name,
+               "username": self.username
+               }
 
 class Bot(models.Model):
     bot_id = models.IntegerField(primary_key=True)
@@ -44,7 +50,7 @@ class Bot(models.Model):
 class BotLike(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
     bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
-    like_datetime = models.DateTimeField(auto_now_add=True)
+    datetime = models.DateTimeField(auto_now_add=True)
 
 
 class BotRating(models.Model):

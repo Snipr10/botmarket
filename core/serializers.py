@@ -7,8 +7,8 @@ from rest_framework import exceptions, serializers, status
 from rest_framework.exceptions import ParseError
 from rest_framework.fields import set_value
 
-
 from . import models
+from .models import BotLike
 
 
 class BotTgSerializer(serializers.ModelSerializer):
@@ -66,3 +66,39 @@ class UserTgSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserTg
         fields = ("user_id", "username", "first_name", "last_name", "is_active", "is_ban", "is_deleted")
+
+
+class UserDataSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = models.UserTg
+        fields = ("user_id", "username", "first_name", "last_name")
+
+
+def get_user(user):
+    return {"user_id": user.user_id,
+            "first_name": user.first_name,
+            "last_name": user.last_name,
+            "username": user.username
+            }
+
+
+class LikesSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    def get_user(self, bot_like):
+        return get_user(bot_like.user)
+
+    class Meta:
+        model = BotLike
+        fields = ('id', 'user', 'datetime')
+
+
+class CommentsSerializer(serializers.ModelSerializer):
+    user = serializers.SerializerMethodField()
+
+    def get_user(self, bot_comment):
+        return get_user(bot_comment.user)
+
+    class Meta:
+        model = models.BotComment
+        fields = ('id', 'user', 'datetime', 'text')
