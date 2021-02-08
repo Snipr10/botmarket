@@ -16,6 +16,7 @@ class BotTgSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=150, required=False, allow_blank=True)
     is_user = serializers.BooleanField()
     is_active = serializers.BooleanField()
     is_ban = serializers.BooleanField()
@@ -29,6 +30,7 @@ class BotTgSerializer(serializers.ModelSerializer):
         bot.username = validated_data.get("username", bot.username)
         bot.first_name = validated_data.get("first_name", bot.first_name)
         bot.last_name = validated_data.get("last_name", bot.last_name)
+        bot.phone = validated_data.get("phone", bot.phone)
         bot.description = validated_data.get("description", bot.description)
         bot.tags = validated_data.get("tags", bot.tags)
         bot.is_user = validated_data.get("is_user", bot.is_user)
@@ -41,7 +43,7 @@ class BotTgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Bot
-        fields = ("bot_id", "username", "first_name", "last_name", "is_user", "is_active",
+        fields = ("bot_id", "username", "first_name", "last_name", "phone", "is_user", "is_active",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description")
 
 
@@ -50,6 +52,7 @@ class UserTgSerializer(serializers.ModelSerializer):
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
     first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    phone = serializers.CharField(max_length=150, required=False, allow_blank=True)
     is_active = serializers.BooleanField()
     is_ban = serializers.BooleanField()
     is_deleted = serializers.BooleanField()
@@ -58,6 +61,7 @@ class UserTgSerializer(serializers.ModelSerializer):
         user.username = validated_data.get("username", user.username)
         user.first_name = validated_data.get("first_name", user.first_name)
         user.last_name = validated_data.get("last_name", user.last_name)
+        user.phone = validated_data.get("phone", user.phone)
         user.is_active = validated_data.get("is_active", user.is_active)
         user.is_ban = validated_data.get("is_ban", user.is_ban)
         user.is_deleted = validated_data.get("is_deleted", user.is_deleted)
@@ -65,13 +69,13 @@ class UserTgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.UserTg
-        fields = ("user_id", "username", "first_name", "last_name", "is_active", "is_ban", "is_deleted")
+        fields = ("user_id", "username", "first_name", "last_name", "phone", "is_active", "is_ban", "is_deleted")
 
 
 class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.UserTg
-        fields = ("user_id", "username", "first_name", "last_name")
+        fields = ("user_id", "username", "first_name", "last_name", "phone")
 
 
 def get_user(user):
