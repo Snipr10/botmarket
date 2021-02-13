@@ -24,14 +24,17 @@ class BotTgSerializer(serializers.ModelSerializer):
     is_reply = serializers.BooleanField()
     ready_to_use = serializers.BooleanField()
     tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description_rus = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description_eng = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description = serializers.SerializerMethodField()
 
     def update(self, bot, validated_data):
         bot.username = validated_data.get("username", bot.username)
         bot.first_name = validated_data.get("first_name", bot.first_name)
         bot.last_name = validated_data.get("last_name", bot.last_name)
         bot.phone = validated_data.get("phone", bot.phone)
-        bot.description = validated_data.get("description", bot.description)
+        bot.description_rus = validated_data.get("description_rus", bot.description_rus)
+        bot.description_eng = validated_data.get("description_eng", bot.description_eng)
         bot.tags = validated_data.get("tags", bot.tags)
         bot.is_user = validated_data.get("is_user", bot.is_user)
         bot.is_active = validated_data.get("is_active", bot.is_active)
@@ -41,10 +44,13 @@ class BotTgSerializer(serializers.ModelSerializer):
         bot.ready_to_use = validated_data.get("ready_to_use", bot.ready_to_use)
         return bot.save()
 
+    def get_description(self, bot):
+        return "in progress"
+
     class Meta:
         model = models.Bot
-        fields = ("bot_id", "username", "first_name", "last_name", "phone", "is_user", "is_active",
-                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description")
+        fields = ("bot_id", "username", "first_name", "last_name", "phone", "is_user", "is_active", "description",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_eng", "description_rus")
 
 
 class UserTgSerializer(serializers.ModelSerializer):

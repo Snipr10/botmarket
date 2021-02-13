@@ -30,5 +30,7 @@ urlpatterns = [
     path("<int:pk>/ratings/", views.Ratings.as_view(), name="/"),
 
     path("search/", views.Search.as_view(), name="/"),
+    path("top/", views.Top.as_view(), name="/"),
+
 
 ]

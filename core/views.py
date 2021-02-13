@@ -243,3 +243,13 @@ class Search(generics.GenericAPIView):
         return Response({"bots":  self.get_serializer(self.queryset_bot.filter(tags__in=tags)[start:end], many=True,
                                                       context={'request': request}).data})
 
+
+class Top(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.BotTgSerializer
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+
+    def get(self,  request, *args, **kwargs):
+        return Response({"bots": self.get_serializer(self.queryset_bot.filter()[:10], many=True,
+                                                     context={'request': request}).data})
