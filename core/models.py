@@ -18,6 +18,7 @@ class UserTg(models.Model):
     is_active = models.BooleanField(default=True)
     is_ban = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
+    language = models.CharField(max_length=150, default="ru")
 
     def __str__(self):
         return {"user_id": self.user_id,
@@ -41,7 +42,8 @@ class Bot(models.Model):
     ready_to_use = models.BooleanField(default=True)
     tags = models.CharField(max_length=4000)
     # maybe change max_length and create new table for description
-    description = models.CharField(max_length=4000)
+    description_rus = models.CharField(max_length=4000, null=True, blank=True)
+    description_eng = models.CharField(max_length=4000, null=True, blank=True)
 
 
 # todo is Needed?

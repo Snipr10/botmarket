@@ -31,7 +31,11 @@ class BotTg(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
-        serializer.save()
+        try:
+            serializer.save()
+        except Exception as e:
+            return Response(str(e))
+
         return Response({"bot": serializer.data})
 
     def patch(self, request, *args, **kwargs):
@@ -221,3 +225,21 @@ class CommentView(LikeView):
             return Response("Delete comment")
         except models.BotComment.DoesNotExist as e:
             return Response("Comment not exist")
+
+
+class Search(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.BotTgSerializer
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    #
+    def post(self,  request, *args, **kwargs):
+        tags = request.data["tags"]
+        try:
+            start = int(request.data["start"]) - 1
+            end = int(request.data["end"]) - 1
+        except KeyError:
+            start = 0
+            end = 4
+        return Response({"bots":  self.get_serializer(self.queryset_bot.filter(tags__in=tags)[start:end], many=True,
+                                                      context={'request': request}).data})
+

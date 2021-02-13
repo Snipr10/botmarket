@@ -29,5 +29,6 @@ urlpatterns = [
     path("<int:pk>/comments/", views.Comments.as_view(), name="/"),
     path("<int:pk>/ratings/", views.Ratings.as_view(), name="/"),
 
+    path("search/", views.Search.as_view(), name="/"),
 
 ]
