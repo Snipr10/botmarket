@@ -44,6 +44,7 @@ class Bot(models.Model):
     # maybe change max_length and create new table for description
     description_rus = models.CharField(max_length=4000, null=True, blank=True)
     description_eng = models.CharField(max_length=4000, null=True, blank=True)
+    user = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
 
 
 # todo is Needed?

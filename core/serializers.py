@@ -28,6 +28,13 @@ class BotTgSerializer(serializers.ModelSerializer):
     description_eng = serializers.CharField(max_length=150, required=False, allow_blank=True)
     description = serializers.SerializerMethodField()
 
+    def create(self, validated_data):
+        bot = models.Bot.objects.create(**validated_data)
+        user = self.context.get("user")
+        bot.user = user
+        bot.save()
+        return bot
+
     def update(self, bot, validated_data):
         bot.username = validated_data.get("username", bot.username)
         bot.first_name = validated_data.get("first_name", bot.first_name)
@@ -44,8 +51,12 @@ class BotTgSerializer(serializers.ModelSerializer):
         bot.ready_to_use = validated_data.get("ready_to_use", bot.ready_to_use)
         return bot.save()
 
+
     def get_description(self, bot):
-        return "in progress"
+        language = self.context.get("language")
+        if language == "ru":
+            return bot.description_rus
+        return bot.description_eng
 
     class Meta:
         model = models.Bot
@@ -62,12 +73,14 @@ class UserTgSerializer(serializers.ModelSerializer):
     is_active = serializers.BooleanField()
     is_ban = serializers.BooleanField()
     is_deleted = serializers.BooleanField()
+    language = serializers.CharField(max_length=150, required=False, allow_blank=True)
 
     def update(self, user, validated_data):
         user.username = validated_data.get("username", user.username)
         user.first_name = validated_data.get("first_name", user.first_name)
         user.last_name = validated_data.get("last_name", user.last_name)
         user.phone = validated_data.get("phone", user.phone)
+        user.language = validated_data.get("language", user.language)
         user.is_active = validated_data.get("is_active", user.is_active)
         user.is_ban = validated_data.get("is_ban", user.is_ban)
         user.is_deleted = validated_data.get("is_deleted", user.is_deleted)
@@ -75,7 +88,8 @@ class UserTgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.UserTg
-        fields = ("user_id", "username", "first_name", "last_name", "phone", "is_active", "is_ban", "is_deleted")
+        fields = ("user_id", "username", "first_name", "last_name", "phone", "is_active", "is_ban", "is_deleted",
+                  "language")
 
 
 class UserDataSerializer(serializers.ModelSerializer):

@@ -21,7 +21,7 @@ urlpatterns = [
     path("<int:pk>/like/<int:bot_pk>", views.LikeView.as_view(), name="/"),
     path("<int:pk>/rating/<int:bot_pk>", views.RaitingView.as_view(), name="/"),
     path("<int:pk>/comment/<int:bot_pk>", views.CommentView.as_view(), name="/"),
-    path("<int:pk>/bot_tg/", views.BotTg.as_view(), name="/"),
+    path("<int:pk>/bot_tg/<int:bot_pk>", views.BotTg.as_view(), name="/"),
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("bots_tg/", views.BotList.as_view(), name="/"),
     path("users_tg/", views.UserList.as_view(), name="/"),
@@ -29,8 +29,8 @@ urlpatterns = [
     path("<int:pk>/comments/", views.Comments.as_view(), name="/"),
     path("<int:pk>/ratings/", views.Ratings.as_view(), name="/"),
 
-    path("search/", views.Search.as_view(), name="/"),
-    path("top/", views.Top.as_view(), name="/"),
+    path("search/<int:pk>", views.Search.as_view(), name="/"),
+    path("top/<int:pk>", views.Top.as_view(), name="/"),
 
 
 ]

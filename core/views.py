@@ -12,39 +12,48 @@ class BotList(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.BotTgSerializer
     queryset_bot = models.Bot.objects.filter(is_active=True)
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self,  request, *args, **kwargs):
-        serializer = serializers.BotTgSerializer(self.queryset_bot, many=True, context={'request': request})
-        return Response({"bots": serializer.data})
+        # user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        return Response({"bots": self.get_serializer(self.queryset_bot, many=True,
+                                                             # context={'language': user.language},
+                                                            ).data})
 
 
 class BotTg(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.BotTgSerializer
     queryset_bot = models.Bot.objects.filter()
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
 
     def get(self,  request, *args, **kwargs):
-        bot = self.queryset_bot.filter(bot_id=kwargs['pk'])
-        serializer = serializers.BotTgSerializer(bot, many=True, context={'request': request})
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        serializer = serializers.BotTgSerializer(self.queryset_bot.filter(bot_id=kwargs['bot_pk']),
+                                                 many=True, context={"user": user}
+                                                 )
         return Response({"bot": serializer.data})
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, partial=True)
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user})
         serializer.is_valid(raise_exception=True)
         try:
             serializer.save()
         except Exception as e:
             return Response(str(e))
-
         return Response({"bot": serializer.data})
 
     def patch(self, request, *args, **kwargs):
-        bot = get_object_or_404(self.queryset_bot, bot_id=kwargs['pk'])
-
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        bot = get_object_or_404(self.queryset_bot, bot_id=kwargs['bot_pk'])
+        if bot.user != user:
+            return Response("bot's owner is not this user")
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.update(bot, request.data)
-        bot = self.queryset_bot.filter(bot_id=kwargs['pk'])
+        bot = self.queryset_bot.filter(bot_id=kwargs['bot_pk'])
         serializer = serializers.BotTgSerializer(bot, many=True, context={'request': request})
         return Response({"bot": serializer.data})
 
@@ -229,9 +238,10 @@ class CommentView(LikeView):
 
 class Search(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
-    serializer_class = serializers.BotTgSerializer
+    # serializer_class = serializers.BotTgSerializer
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    #
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
     def post(self,  request, *args, **kwargs):
         tags = request.data["tags"]
         try:
@@ -240,16 +250,24 @@ class Search(generics.GenericAPIView):
         except KeyError:
             start = 0
             end = 4
-        return Response({"bots":  self.get_serializer(self.queryset_bot.filter(tags__in=tags)[start:end], many=True,
-                                                      context={'request': request}).data})
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        return Response({"bots":  serializers.BotTgSerializer(self.queryset_bot.filter(tags__in=tags)[start:end],
+                                                              many=True,
+                                                              context={'language': user.language},
+                                                              ).data})
 
 
 class Top(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
-    serializer_class = serializers.BotTgSerializer
+    # serializer_class = serializers.BotTgSerializer
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self,  request, *args, **kwargs):
-        return Response({"bots": self.get_serializer(self.queryset_bot.filter()[:10], many=True,
-                                                     context={'request': request}).data})
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+
+        return Response({"bots": serializers.BotTgSerializer(self.queryset_bot.filter()[:10],
+                                                             context={'language': user.language},
+                                                             many=True
+                                                             ).data})
+
