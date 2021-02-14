@@ -14,8 +14,10 @@ from .models import BotLike
 class BotTgSerializer(serializers.ModelSerializer):
     bot_id = serializers.IntegerField()
     username = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    first_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    last_name = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    first_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    first_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    last_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
     phone = serializers.CharField(max_length=150, required=False, allow_blank=True)
     is_user = serializers.BooleanField()
     is_active = serializers.BooleanField()
@@ -24,8 +26,8 @@ class BotTgSerializer(serializers.ModelSerializer):
     is_reply = serializers.BooleanField()
     ready_to_use = serializers.BooleanField()
     tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description_rus = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    description_eng = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
     description = serializers.SerializerMethodField()
 
     def create(self, validated_data):
@@ -37,31 +39,35 @@ class BotTgSerializer(serializers.ModelSerializer):
 
     def update(self, bot, validated_data):
         bot.username = validated_data.get("username", bot.username)
-        bot.first_name = validated_data.get("first_name", bot.first_name)
-        bot.last_name = validated_data.get("last_name", bot.last_name)
+        bot.first_name_en = validated_data.get("first_name_en", bot.first_name_en)
+        bot.first_name_ru = validated_data.get("first_name_ru", bot.first_name_ru)
+        bot.last_name_en = validated_data.get("last_name_en", bot.last_name_en)
+        bot.last_name_ru = validated_data.get("last_name_ru", bot.last_name_ru)
         bot.phone = validated_data.get("phone", bot.phone)
-        bot.description_rus = validated_data.get("description_rus", bot.description_rus)
-        bot.description_eng = validated_data.get("description_eng", bot.description_eng)
+        bot.description_rus = validated_data.get("description_ru", bot.description_rus)
+        bot.description_eng = validated_data.get("description_en", bot.description_eng)
         bot.tags = validated_data.get("tags", bot.tags)
         bot.is_user = validated_data.get("is_user", bot.is_user)
-        bot.is_active = validated_data.get("is_active", bot.is_active)
-        bot.is_ban = validated_data.get("is_ban", bot.is_ban)
         bot.is_deleted = validated_data.get("is_deleted", bot.is_deleted)
-        bot.is_reply = validated_data.get("is_reply", bot.is_reply)
         bot.ready_to_use = validated_data.get("ready_to_use", bot.ready_to_use)
-        return bot.save()
 
+        # bot.is_active = validated_data.get("is_active", bot.is_active)
+        # bot.is_ban = validated_data.get("is_ban", bot.is_ban)
+        # bot.is_reply = validated_data.get("is_reply", bot.is_reply)
+
+        return bot.save()
 
     def get_description(self, bot):
         language = self.context.get("language")
         if language == "ru":
-            return bot.description_rus
-        return bot.description_eng
+            return bot.description_ru
+        return bot.description_en
 
     class Meta:
         model = models.Bot
-        fields = ("bot_id", "username", "first_name", "last_name", "phone", "is_user", "is_active", "description",
-                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_eng", "description_rus")
+        fields = ("bot_id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
+                  "phone", "is_user", "is_active", "description",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru")
 
 
 class UserTgSerializer(serializers.ModelSerializer):

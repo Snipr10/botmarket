@@ -31,8 +31,10 @@ class UserTg(models.Model):
 class Bot(models.Model):
     bot_id = models.IntegerField(primary_key=True)
     username = models.CharField(max_length=150)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
+    first_name_en = models.CharField(max_length=150, null=True)
+    first_name_ru = models.CharField(max_length=150, null=True)
+    last_name_en = models.CharField(max_length=150, null=True)
+    last_name_ru = models.CharField(max_length=150, null=True)
     phone = models.CharField(max_length=150)
     is_user = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -40,10 +42,12 @@ class Bot(models.Model):
     is_deleted = models.BooleanField(default=False)
     is_reply = models.BooleanField(default=False)
     ready_to_use = models.BooleanField(default=True)
+    last_active = models.DateTimeField(null=True, blank=True)
+    date_created = models.DateTimeField(auto_now_add=True)
     tags = models.CharField(max_length=4000)
     # maybe change max_length and create new table for description
-    description_rus = models.CharField(max_length=4000, null=True, blank=True)
-    description_eng = models.CharField(max_length=4000, null=True, blank=True)
+    description_ru = models.CharField(max_length=4000, null=True, blank=True)
+    description_en = models.CharField(max_length=4000, null=True, blank=True)
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
 
 
