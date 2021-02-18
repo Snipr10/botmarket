@@ -79,10 +79,13 @@ class UserTg(generics.GenericAPIView):
         return Response({"user": serializer.data})
 
     def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response({"user": serializer.data})
+        try:
+            serializer = self.get_serializer(data=request.data, partial=True)
+            serializer.is_valid(raise_exception=True)
+            serializer.save()
+            return Response({"user": serializer.data})
+        except Exception as e:
+            return Response({"error": str(e)})
 
     def patch(self, request, *args, **kwargs):
         user = get_object_or_404(self.queryset, user_id=kwargs['pk'])
