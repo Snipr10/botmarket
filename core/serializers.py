@@ -12,8 +12,7 @@ from .models import BotLike
 
 
 class BotTgSerializer(serializers.ModelSerializer):
-    bot_id = serializers.IntegerField()
-    username = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    username = serializers.CharField(max_length=150, required=True)
     first_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
     first_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
     last_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
@@ -38,7 +37,7 @@ class BotTgSerializer(serializers.ModelSerializer):
         return bot
 
     def update(self, bot, validated_data):
-        bot.username = validated_data.get("username", bot.username)
+        # bot.username = validated_data.get("username", bot.username)
         bot.first_name_en = validated_data.get("first_name_en", bot.first_name_en)
         bot.first_name_ru = validated_data.get("first_name_ru", bot.first_name_ru)
         bot.last_name_en = validated_data.get("last_name_en", bot.last_name_en)
@@ -65,7 +64,7 @@ class BotTgSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.Bot
-        fields = ("bot_id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
+        fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
                   "phone", "is_user", "is_active", "description",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru")
 

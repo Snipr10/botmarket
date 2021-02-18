@@ -29,8 +29,7 @@ class UserTg(models.Model):
 
 
 class Bot(models.Model):
-    bot_id = models.IntegerField(primary_key=True)
-    username = models.CharField(max_length=150)
+    username = models.CharField(max_length=150, unique=True)
     first_name_en = models.CharField(max_length=150, null=True)
     first_name_ru = models.CharField(max_length=150, null=True)
     last_name_en = models.CharField(max_length=150, null=True)

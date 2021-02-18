@@ -30,13 +30,15 @@ class BotTg(generics.GenericAPIView):
 
     def get(self,  request, *args, **kwargs):
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-        serializer = serializers.BotTgSerializer(self.queryset_bot.filter(bot_id=kwargs['bot_pk']),
+        serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
                                                  many=True, context={"user": user}
                                                  )
         return Response({"bot": serializer.data})
 
     def post(self, request, *args, **kwargs):
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        if request.data.get("username") is None:
+            request.data["username"] = kwargs['bot_username']
         serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user})
         serializer.is_valid(raise_exception=True)
         try:
@@ -47,7 +49,7 @@ class BotTg(generics.GenericAPIView):
 
     def patch(self, request, *args, **kwargs):
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=kwargs['bot_username'])
         if bot.user != user:
             return Response("bot's owner is not this user")
         serializer = self.get_serializer(data=request.data, partial=True)
@@ -104,7 +106,7 @@ class Likes(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self,  request, *args, **kwargs):
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         query_set = self.queryset.filter(bot=bot)
         serializer = serializers.LikesSerializer(query_set, many=True, context={'request': request})
         return Response({"likes": serializer.data, "count": len(query_set)})
@@ -117,7 +119,7 @@ class LikeView(generics.CreateAPIView):
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
 
         try:
             models.BotLike.objects.get(user=user_tg, bot=bot)
@@ -128,7 +130,7 @@ class LikeView(generics.CreateAPIView):
 
     def delete(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             like = models.BotLike.objects.get(user=user_tg, bot=bot)
             like.delete()
@@ -144,7 +146,7 @@ class Ratings(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self,  request, *args, **kwargs):
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         rating = self.queryset.filter(bot=bot).aggregate(Avg('rating'))['rating__avg']
         return Response({"rating": rating})
 
@@ -156,7 +158,7 @@ class RaitingView(LikeView):
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             models.BotRating.objects.get(user=user_tg, bot=bot)
             return Response("Already rating")
@@ -166,7 +168,7 @@ class RaitingView(LikeView):
 
     def patch(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             rating = models.BotRating.objects.get(user=user_tg, bot=bot)
             rating.rating = int(request.data['rating'])
@@ -178,7 +180,7 @@ class RaitingView(LikeView):
 
     def delete(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             rating = models.BotRating.objects.get(user=user_tg, bot=bot)
             rating.delete()
@@ -195,7 +197,7 @@ class Comments(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self,  request, *args, **kwargs):
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         query_set = self.queryset.filter(bot=bot)
         serializer = serializers.CommentsSerializer(query_set, many=True, context={'request': request})
         return Response({"comments": serializer.data, "count": len(query_set)})
@@ -208,7 +210,7 @@ class CommentView(LikeView):
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             models.BotComment.objects.get(user=user_tg, bot=bot)
             return Response("Already comment")
@@ -218,7 +220,7 @@ class CommentView(LikeView):
 
     def patch(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             rating = models.BotComment.objects.get(user=user_tg, bot=bot)
             rating.rating = request.data['rating']
@@ -230,7 +232,7 @@ class CommentView(LikeView):
 
     def delete(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, bot_id=self.kwargs['bot_pk'])
+        bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
         try:
             comment = models.BotComment.objects.get(user=user_tg, bot=bot)
             comment.delete()
