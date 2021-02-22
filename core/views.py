@@ -291,6 +291,11 @@ class Top(generics.GenericAPIView):
                                                              ).data})
 
 
+class Deal(generics.CreateAPIView):
+    serializer_class = serializers.DealSerializer
+    queryset = models.Deal.objects.filter()
+
+
 # Refactoring ELASTIC
 
 from datetime import datetime

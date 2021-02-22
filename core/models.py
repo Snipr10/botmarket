@@ -11,29 +11,31 @@ class UserManager(BaseUserManager):
 
 class UserTg(models.Model):
     user_id = models.IntegerField(primary_key=True)
-    first_name = models.CharField(max_length=150)
-    last_name = models.CharField(max_length=150)
-    username = models.CharField(max_length=150)
+    first_name = models.CharField(max_length=150, null=True, blank=True)
+    last_name = models.CharField(max_length=150, null=True, blank=True)
+    username = models.CharField(max_length=150, null=True, blank=True)
     phone = models.CharField(max_length=150)
     is_active = models.BooleanField(default=True)
     is_ban = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     language = models.CharField(max_length=150, default="ru")
 
+    # def __str__(self):
+    #     return {"user_id": self.user_id,
+    #            "first_name": self.first_name,
+    #            "last_name": self.last_name,
+    #            "username": self.username
+    #            }
     def __str__(self):
-        return {"user_id": self.user_id,
-               "first_name": self.first_name,
-               "last_name": self.last_name,
-               "username": self.username
-               }
+        return str(self.user_id)
 
 
 class Bot(models.Model):
-    username = models.CharField(max_length=150, unique=True)
-    first_name_en = models.CharField(max_length=150, null=True)
-    first_name_ru = models.CharField(max_length=150, null=True)
-    last_name_en = models.CharField(max_length=150, null=True)
-    last_name_ru = models.CharField(max_length=150, null=True)
+    username = models.CharField(max_length=150, unique=True, blank=True)
+    first_name_en = models.CharField(max_length=150, null=True, blank=True)
+    first_name_ru = models.CharField(max_length=150, null=True, blank=True)
+    last_name_en = models.CharField(max_length=150, null=True, blank=True)
+    last_name_ru = models.CharField(max_length=150, null=True, blank=True)
     phone = models.CharField(max_length=150)
     is_user = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
@@ -49,6 +51,8 @@ class Bot(models.Model):
     description_en = models.CharField(max_length=4000, null=True, blank=True)
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
 
+    def __str__(self):
+        return str(self.username)
 
 # todo is Needed?
 # class BotView(models.Model):
@@ -61,6 +65,9 @@ class BotLike(models.Model):
     bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return str(self.user.username)
+
 
 class BotRating(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
@@ -68,9 +75,25 @@ class BotRating(models.Model):
     rating = models.IntegerField(validators=[MinValueValidator(0), MaxValueValidator(5)])
     datetime = models.DateTimeField(auto_now_add=True)
 
+    def __str__(self):
+        return str(self.user.username)
+
 
 class BotComment(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
     bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
     text = models.CharField(max_length=1000, blank=True)
+
+
+class Deal(models.Model):
+    user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
+    message_id = models.IntegerField()
+    description = models.CharField(max_length=4000)
+    is_active = models.BooleanField(default=True)
+    answer = models.CharField(max_length=4000, null=True, blank=True)
+
+    def __str__(self):
+         return str(self.pk)
+
+

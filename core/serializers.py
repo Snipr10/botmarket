@@ -8,7 +8,7 @@ from rest_framework.exceptions import ParseError
 from rest_framework.fields import set_value
 
 from . import models
-from .models import BotLike
+from .models import BotLike, Deal
 
 
 class BotTgSerializer(serializers.ModelSerializer):
@@ -131,3 +131,11 @@ class CommentsSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.BotComment
         fields = ('id', 'user', 'datetime', 'text')
+
+
+class DealSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Deal
+        fields = '__all__'
+
