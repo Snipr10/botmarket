@@ -32,5 +32,6 @@ urlpatterns = [
     path("search/<int:pk>", views.Search.as_view(), name="/"),
     path("top/<int:pk>", views.Top.as_view(), name="/"),
 
+    path("update_elasctic/", views.UpdateElastic.as_view(), name="/")
 
 ]
