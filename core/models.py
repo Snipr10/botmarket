@@ -1,9 +1,12 @@
+import requests
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 
 # Create your models here.
+from botmarket.settings import SUPPORT_URL
+
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
@@ -92,6 +95,23 @@ class Deal(models.Model):
     description = models.CharField(max_length=4000)
     is_active = models.BooleanField(default=True)
     answer = models.CharField(max_length=4000, null=True, blank=True)
+
+    def save(self, *args, **kwargs):
+        if self.pk is not None and not self.is_active and self.answer is not None:
+            try:
+                post_data = {
+                            "user_id": self.user.pk,
+                            "message_id": self.message_id,
+                            "text": self.answer
+                            }
+
+                response = requests.post(SUPPORT_URL, json=post_data)
+                if response.status_code != 200:
+                    raise Exception(response.text)
+            except Exception as e:
+                print(e)
+                raise Exception(e)
+        super().save(*args, **kwargs)
 
     def __str__(self):
          return str(self.pk)
