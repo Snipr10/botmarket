@@ -86,7 +86,7 @@ class BotComment(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
     bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
-    text = models.CharField(max_length=1000, blank=True)
+    text = models.CharField(max_length=4000, blank=True)
 
 
 class Deal(models.Model):

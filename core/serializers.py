@@ -25,8 +25,8 @@ class BotTgSerializer(serializers.ModelSerializer):
     is_reply = serializers.BooleanField()
     ready_to_use = serializers.BooleanField()
     tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    description_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
+    description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True)
+    description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True)
     description = serializers.SerializerMethodField()
 
     def create(self, validated_data):
