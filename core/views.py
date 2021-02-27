@@ -9,7 +9,7 @@ from core import models, serializers
 from rest_framework.generics import get_object_or_404
 from django.db.models import Avg
 
-from core.elastic.elastic import add_to_elastic, add_to_elastic_bot_data, search_elastic
+from core.elastic.elastic import add_to_elastic, add_to_elastic_bot_data, search_elastic, add_to_elastic_bot_model
 
 
 class BotList(generics.GenericAPIView):
@@ -46,8 +46,8 @@ class BotTg(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         try:
             serializer.save()
-        except Exception as e:
-            return Response(str(e))
+        except IntegrityError:
+            return self.patch(request, *args, **kwargs)
         bot = serializer.data
         add_to_elastic_bot_data(bot)
         return Response({"bot": bot})
@@ -57,14 +57,14 @@ class BotTg(generics.GenericAPIView):
         bot = get_object_or_404(self.queryset_bot, username=kwargs['bot_username'])
         if bot.user != user:
             return Response("bot's owner is not this user")
+        if request.data.get("username") is None:
+            request.data["username"] = kwargs['bot_username']
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.update(bot, request.data)
-        bot = self.queryset_bot.filter(bot_id=kwargs['bot_pk'])
-        serializer = serializers.BotTgSerializer(bot, many=True, context={'request': request})
-        bot = serializer.data
-        add_to_elastic_bot_data(bot)
-        return Response({"bot": bot})
+        bot = self.queryset_bot.get(username=kwargs['bot_username'])
+        add_to_elastic_bot_model(bot)
+        return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request}).data})
 
 
 class UserList(generics.GenericAPIView):
@@ -101,10 +101,9 @@ class UserTg(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.update(user, request.data)
-        user = self.queryset.filter(user_id=kwargs['pk'])
-        serializer = serializers.UserTgSerializer(user, many=True, context={'request': request})
+        user = self.queryset.get(user_id=kwargs['pk'])
+        serializer = serializers.UserTgSerializer(user, many=False, context={'request': request})
         return Response({"user": serializer.data})
-
 
 
 class Likes(generics.GenericAPIView):

@@ -21,6 +21,12 @@ def delete_from_elastic(id):
     es.delete(index=index, id=id)
 
 
+def add_to_elastic_bot_model(bot):
+    add_to_elastic(bot.id, bot.tags,
+                   "{ru} {en}".format(ru=bot.description_ru,
+                                      en=bot.description_en))
+
+
 def add_to_elastic_bot_data(bot):
     add_to_elastic(bot['id'], bot['tags'],
                    "{ru} {en}".format(ru=bot['description_ru'],
