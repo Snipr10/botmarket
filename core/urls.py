@@ -16,8 +16,15 @@ Including another URLconf
 from django.urls import path
 
 from core import views
+from django.urls import path
+
+def trigger_error(request):
+    division_by_zero = 1 / 0
+
 
 urlpatterns = [
+    path('sentry-debug/', trigger_error),
+
     path("<int:pk>/like/<str:bot_username>", views.LikeView.as_view(), name="/"),
     path("<int:pk>/rating/<str:bot_username>", views.RaitingView.as_view(), name="/"),
     path("<int:pk>/comment/<str:bot_username>", views.CommentView.as_view(), name="/"),
