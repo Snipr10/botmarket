@@ -1,3 +1,4 @@
+from django.db import IntegrityError
 from django.shortcuts import render
 
 # Create your views here.
@@ -92,8 +93,8 @@ class UserTg(generics.GenericAPIView):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response({"user": serializer.data})
-        except Exception as e:
-            return Response({"error": str(e)})
+        except IntegrityError as e:
+            return self.patch(request, *args, **kwargs)
 
     def patch(self, request, *args, **kwargs):
         user = get_object_or_404(self.queryset, user_id=kwargs['pk'])
@@ -103,6 +104,7 @@ class UserTg(generics.GenericAPIView):
         user = self.queryset.filter(user_id=kwargs['pk'])
         serializer = serializers.UserTgSerializer(user, many=True, context={'request': request})
         return Response({"user": serializer.data})
+
 
 
 class Likes(generics.GenericAPIView):
