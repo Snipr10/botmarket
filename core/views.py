@@ -1,14 +1,22 @@
+from datetime import timezone, date
+
+from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
 
 # Create your views here.
+from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.response import Response
 from rest_framework import generics, permissions
 
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
-from django.db.models import Avg
+from django.db.models import Avg, Sum, Count
+from django.db.models.functions import Coalesce
+from datetime import timedelta
+
 
 from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model
+from core.models import BotLike
 
 
 class BotList(generics.GenericAPIView):
@@ -263,7 +271,7 @@ class Search(generics.GenericAPIView):
             end = 4
         ids = search_elastic(tags, start, end - start + 1)
         res = list(self.queryset_bot.filter(id__in=ids))
-        res.sort(key=lambda t: ids.index(t.id))
+        sort(res, ids)
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'language': user.language},
@@ -285,9 +293,20 @@ class Top(generics.GenericAPIView):
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self, request, *args, **kwargs):
+        months = 1
+        try:
+            months = int(request.query_params["months"])
+        except MultiValueDictKeyError:
+            pass
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-
-        return Response({"bots": serializers.BotTgSerializer(self.queryset_bot.filter()[:10],
+        month_date = date.today() + relativedelta(months=-months)
+        bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
+                       .values('bot_id').annotate(
+            num=Count('bot_id')).order_by('-num')[0:10].values_list('bot_id', flat=True)
+                       )
+        res = list(self.queryset_bot.filter(id__in=bot_ids))
+        sort(res, bot_ids)
+        return Response({"bots": serializers.BotTgSerializer(res,
                                                              context={'language': user.language},
                                                              many=True
                                                              ).data})
@@ -296,3 +315,7 @@ class Top(generics.GenericAPIView):
 class Deal(generics.CreateAPIView):
     serializer_class = serializers.DealSerializer
     queryset = models.Deal.objects.filter()
+
+
+def sort(res, ids):
+    res.sort(key=lambda t: ids.index(t.id))
