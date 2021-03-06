@@ -45,7 +45,7 @@ class Bot(models.Model):
     is_ban = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     is_reply = models.BooleanField(default=False)
-    ready_to_use = models.BooleanField(default=True)
+    ready_to_use = models.BooleanField(default=False)
     last_active = models.DateTimeField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     tags = models.CharField(max_length=4000)

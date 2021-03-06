@@ -1,15 +1,14 @@
 from django.db import IntegrityError
-from django.shortcuts import render
 
 # Create your views here.
 from rest_framework.response import Response
-from rest_framework import generics, permissions, status
+from rest_framework import generics, permissions
 
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
 from django.db.models import Avg
 
-from core.elastic.elastic import add_to_elastic, add_to_elastic_bot_data, search_elastic, add_to_elastic_bot_model
+from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model
 
 
 class BotList(generics.GenericAPIView):
@@ -19,9 +18,7 @@ class BotList(generics.GenericAPIView):
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self, request, *args, **kwargs):
-        # user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         return Response({"bots": self.get_serializer(self.queryset_bot, many=True,
-                                                     # context={'language': user.language},
                                                      ).data})
 
 
@@ -49,7 +46,8 @@ class BotTg(generics.GenericAPIView):
         except IntegrityError:
             return self.patch(request, *args, **kwargs)
         bot = serializer.data
-        add_to_elastic_bot_data(bot)
+        # !!! only after test
+        # add_to_elastic_bot_data(bot)
         return Response({"bot": bot})
 
     def patch(self, request, *args, **kwargs):
@@ -63,7 +61,9 @@ class BotTg(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.update(bot, request.data)
         bot = self.queryset_bot.get(username=kwargs['bot_username'])
-        add_to_elastic_bot_model(bot)
+        if bot.is_reply:
+            # !!! only after test
+            add_to_elastic_bot_model(bot)
         return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request}).data})
 
 
@@ -110,7 +110,7 @@ class Likes(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.LikesSerializer
     queryset = models.BotLike.objects.filter()
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def get(self, request, *args, **kwargs):
         bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
@@ -122,7 +122,7 @@ class Likes(generics.GenericAPIView):
 class LikeView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
@@ -150,7 +150,7 @@ class LikeView(generics.CreateAPIView):
 class Ratings(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     queryset = models.BotRating.objects.filter()
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def get(self, request, *args, **kwargs):
         bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
@@ -161,7 +161,7 @@ class Ratings(generics.GenericAPIView):
 class RaitingView(LikeView):
     permission_classes = [permissions.AllowAny]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
@@ -200,7 +200,7 @@ class Comments(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.CommentsSerializer
     queryset = models.BotComment.objects.filter()
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def get(self, request, *args, **kwargs):
         bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
@@ -212,7 +212,7 @@ class Comments(generics.GenericAPIView):
 class CommentView(LikeView):
     permission_classes = [permissions.AllowAny]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
 
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
@@ -250,7 +250,7 @@ class CommentView(LikeView):
 class Search(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     # serializer_class = serializers.BotTgSerializer
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def post(self, request, *args, **kwargs):
@@ -273,7 +273,7 @@ class Search(generics.GenericAPIView):
 
 class UpdateElastic(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
-        for bot in models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False):
+        for bot in models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True):
             add_to_elastic(bot.id, bot.tags, "{ru} {en}".format(ru=bot.description_ru,
                                                                 en=bot.description_en))
         return Response("Ok")
@@ -281,8 +281,7 @@ class UpdateElastic(generics.GenericAPIView):
 
 class Top(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
-    # serializer_class = serializers.BotTgSerializer
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self, request, *args, **kwargs):
