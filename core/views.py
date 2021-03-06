@@ -14,7 +14,6 @@ from django.db.models import Avg, Sum, Count
 from django.db.models.functions import Coalesce
 from datetime import timedelta
 
-
 from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model
 from core.models import BotLike
 
@@ -292,24 +291,31 @@ class Top(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
-    def get(self, request, *args, **kwargs):
+    def post(self, request, *args, **kwargs):
         months = 1
+        start = 0
+        end = 9
         try:
-            months = int(request.query_params["months"])
-        except MultiValueDictKeyError:
+            months = int(request.data["months"])
+            start = int(request.data["start"]) - 1
+            end = int(request.data["end"]) - 1
+        except KeyError:
             pass
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         month_date = date.today() + relativedelta(months=-months)
         bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
                        .values('bot_id').annotate(
-            num=Count('bot_id')).order_by('-num')[0:10].values_list('bot_id', flat=True)
+            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
                        )
+        count = len(bot_ids)
+        bot_ids = bot_ids[start:end]
         res = list(self.queryset_bot.filter(id__in=bot_ids))
         sort(res, bot_ids)
-        return Response({"bots": serializers.BotTgSerializer(res,
+
+        return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'language': user.language},
                                                              many=True
-                                                             ).data})
+                                                             ).data, 'founded': count})
 
 
 class Deal(generics.CreateAPIView):
