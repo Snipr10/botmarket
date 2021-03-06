@@ -269,14 +269,14 @@ class Search(generics.GenericAPIView):
         except KeyError:
             start = 0
             end = 4
-        ids = search_elastic(tags, start, end - start + 1)
+        ids, count = search_elastic(tags, start, end - start + 1)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'language': user.language},
                                                              many=True
-                                                             ).data, 'founded': len(ids)})
+                                                             ).data, 'founded': count})
 
 
 class UpdateElastic(generics.GenericAPIView):

@@ -42,13 +42,15 @@ def add_to_elastic(id, tags, text):
 
 def search_elastic(keys, from_, size):
     ids = []
+    count = 0
     try:
         res = es.search(index=index, body=create_search(keys), from_=from_, size=size)
         for r in res['hits']['hits']:
             ids.append(int(r['_id']))
+        count = res['hits']['total']['value']
     except Exception:
         pass
-    return ids
+    return ids, count
 
 
 def create_search(keys):
