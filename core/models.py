@@ -46,13 +46,18 @@ class Bot(models.Model):
     is_deleted = models.BooleanField(default=False)
     is_reply = models.BooleanField(default=False)
     ready_to_use = models.BooleanField(default=False)
-    last_active = models.DateTimeField(null=True, blank=True)
+    last_check = models.DateTimeField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     tags = models.CharField(max_length=4000)
     # maybe change max_length and create new table for description
     description_ru = models.CharField(max_length=4000, null=True, blank=True)
     description_en = models.CharField(max_length=4000, null=True, blank=True)
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
+    all_warnings = models.IntegerField(default=0)
+    # if bot active warnings = 0
+    warnings = models.IntegerField(default=0)
+    is_founded = models.BooleanField(default=True)
+    is_being_checked = models.BooleanField(default=False)
 
     def __str__(self):
         return str(self.username)
