@@ -3,9 +3,9 @@ from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
-
 # Create your models here.
 from botmarket.settings import SUPPORT_URL
+from core.elastic.elastic import delete_from_elastic
 
 
 class UserManager(BaseUserManager):
@@ -59,8 +59,37 @@ class Bot(models.Model):
     is_founded = models.BooleanField(default=True)
     is_being_checked = models.BooleanField(default=False)
 
+    def save(self, *args, **kwargs):
+        if self.pk is not None and (not self.is_active or not self.ready_to_use):
+            try:
+                delete_from_elastic(self.pk)
+            except Exception as e:
+                print(e)
+                raise Exception(e)
+        super().save(*args, **kwargs)
+
+    def delete(self, *args, **kwargs):
+        try:
+            post_data = {
+                "user_id": self.user.pk,
+                "message_id": self.message_id,
+                "text": "Не могу отправить сообщение юзеру"
+            }
+            response = requests.post(SUPPORT_URL, json=post_data)
+            if response.status_code != 200:
+                print(response.text)
+        except Exception as e:
+            print(e)
+        try:
+            delete_from_elastic(self.pk)
+        except Exception as e:
+            print(e)
+            raise Exception(e)
+        super().delete(*args, **kwargs)
+
     def __str__(self):
         return str(self.username)
+
 
 # todo is Needed?
 # class BotView(models.Model):
@@ -105,10 +134,10 @@ class Deal(models.Model):
         if self.pk is not None and not self.is_active and self.answer is not None:
             try:
                 post_data = {
-                            "user_id": self.user.pk,
-                            "message_id": self.message_id,
-                            "text": self.answer
-                            }
+                    "user_id": self.user.pk,
+                    "message_id": self.message_id,
+                    "text": self.answer
+                }
 
                 response = requests.post(SUPPORT_URL, json=post_data)
                 if response.status_code != 200:
@@ -119,6 +148,4 @@ class Deal(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-         return str(self.pk)
-
-
+        return str(self.pk)
