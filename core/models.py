@@ -4,7 +4,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
 # Create your models here.
-from botmarket.settings import SUPPORT_URL
+from botmarket.settings import SUPPORT_URL, SUPPORT_USER_URL
 from core.elastic.elastic import delete_from_elastic
 
 
@@ -74,7 +74,7 @@ class Bot(models.Model):
                 "user_id": self.user.pk,
                 "text": "Не могу отправить сообщение боту" + str(self.username)
             }
-            response = requests.post(SUPPORT_URL, json=post_data)
+            response = requests.post(SUPPORT_USER_URL, json=post_data)
             if response.status_code != 200:
                 print(response.text)
         except Exception as e:
