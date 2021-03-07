@@ -39,7 +39,7 @@ class Bot(models.Model):
     first_name_ru = models.CharField(max_length=150, null=True, blank=True)
     last_name_en = models.CharField(max_length=150, null=True, blank=True)
     last_name_ru = models.CharField(max_length=150, null=True, blank=True)
-    phone = models.CharField(max_length=150)
+    phone = models.CharField(max_length=150, null=True, blank=True)
     is_user = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
     is_ban = models.BooleanField(default=False)
