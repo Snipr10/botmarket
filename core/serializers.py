@@ -28,6 +28,7 @@ class BotTgSerializer(serializers.ModelSerializer):
     description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True)
     description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True)
     description = serializers.SerializerMethodField()
+    url = serializers.SerializerMethodField()
 
     def create(self, validated_data):
         bot = models.Bot.objects.create(**validated_data)
@@ -62,11 +63,14 @@ class BotTgSerializer(serializers.ModelSerializer):
             return bot.description_ru
         return bot.description_en
 
+    def get_url(self, bot):
+        return "https://t.me/%s" % bot.username
+
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
                   "phone", "is_user", "is_active", "description",
-                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru")
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
 class UserTgSerializer(serializers.ModelSerializer):
