@@ -40,5 +40,8 @@ urlpatterns = [
     path("top/<int:pk>", views.Top.as_view(), name="/"),
 
     path("update_elasctic/", views.UpdateElastic.as_view(), name="/"),
-    path("deal", views.Deal.as_view(), name="/")
+    path("deal", views.Deal.as_view(), name="/"),
+
+    path("tg/<str:bot_username>", views.TgMe.as_view(), name="/")
+
 ]

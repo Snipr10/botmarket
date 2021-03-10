@@ -167,3 +167,5 @@ STATIC_URL = '/static/'
 # SUPPORT_URL = 'https://webhook.site/e2e9c1f0-70c0-4c18-af42-8b419dec7c27'
 SUPPORT_URL = 'http://127.0.0.1:8888/reply'
 SUPPORT_USER_URL = 'http://127.0.0.1:8731/message'
+
+BACKEND_URL = 'http://127.0.0.1:8000'

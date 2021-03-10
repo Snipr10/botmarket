@@ -7,6 +7,7 @@ from rest_framework import exceptions, serializers, status
 from rest_framework.exceptions import ParseError
 from rest_framework.fields import set_value
 
+from botmarket.settings import BACKEND_URL
 from . import models
 from .models import BotLike, Deal
 
@@ -64,7 +65,7 @@ class BotTgSerializer(serializers.ModelSerializer):
         return bot.description_en
 
     def get_url(self, bot):
-        return "https://t.me/%s" % bot.username
+        return "%s/bot_api/tg/%s" % (BACKEND_URL, bot.username)
 
     class Meta:
         model = models.Bot

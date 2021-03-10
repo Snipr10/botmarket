@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
 
 # Create your views here.
+from django.shortcuts import redirect
 from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.response import Response
 from rest_framework import generics, permissions
@@ -321,6 +322,12 @@ class Top(generics.GenericAPIView):
 class Deal(generics.CreateAPIView):
     serializer_class = serializers.DealSerializer
     queryset = models.Deal.objects.filter()
+
+
+class TgMe(generics.CreateAPIView):
+    def get(self, request, *args, **kwargs):
+        username = self.kwargs['bot_username']
+        return redirect("https://t.me/%s" % username)
 
 
 def sort(res, ids):
