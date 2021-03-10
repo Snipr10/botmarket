@@ -327,7 +327,7 @@ class Deal(generics.CreateAPIView):
 class TgMe(generics.CreateAPIView):
     def get(self, request, *args, **kwargs):
         username = self.kwargs['bot_username']
-        return redirect("https://t.me/%s" % username)
+        return redirect('https://t.me/%s' % username.replace('@', ''))
 
 
 def sort(res, ids):
