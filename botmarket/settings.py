@@ -42,7 +42,7 @@ SECRET_KEY = '$*cjg1j!ox&c!ygn40a0^lp_qw#5hhhq_j%fr!6d&qp%_lvs_9'
 
 # TODO env
 # if want env  DEBUG = os.getenv("DJANGO_DEBUG", False)
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
