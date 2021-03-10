@@ -65,7 +65,7 @@ class BotTgSerializer(serializers.ModelSerializer):
         return bot.description_en
 
     def get_url(self, bot):
-        return "%s/tg/%s" % (BACKEND_URL, bot.username)
+        return "%s/tg/%s" % (BACKEND_URL, bot.username.replace("@", ""))
 
     class Meta:
         model = models.Bot

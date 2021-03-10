@@ -21,4 +21,6 @@ from core import views
 urlpatterns = [
     path('admin/', admin.site.urls),
     path("bot_api/", include("core.urls")),
+    path("tg/<str:bot_username>", views.TgMe.as_view(), name="/")
+
 ]
