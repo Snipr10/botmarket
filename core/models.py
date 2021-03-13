@@ -122,6 +122,12 @@ class BotComment(models.Model):
     text = models.CharField(max_length=4000, blank=True)
 
 
+class BotViews(models.Model):
+    user = models.ForeignKey(UserTg, on_delete=models.CASCADE, blank=True, null=True)
+    bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
+    datetime = models.DateTimeField(auto_now_add=True)
+
+
 class Deal(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
     message_id = models.IntegerField()
@@ -172,3 +178,4 @@ class Sessions(models.Model):
 
     def __str__(self):
         return str(self.name)
+

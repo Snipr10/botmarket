@@ -1,5 +1,7 @@
-from datetime import timezone, date
+import asyncio
+import concurrent.futures
 
+from datetime import timezone, date
 from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
 
@@ -327,7 +329,25 @@ class Deal(generics.CreateAPIView):
 class TgMe(generics.CreateAPIView):
     def get(self, request, *args, **kwargs):
         username = self.kwargs['bot_username']
+        pk = request.GET.get("u")
+        executor = concurrent.futures.ThreadPoolExecutor(2)
+        executor.submit(save_views, username, pk)
         return redirect('https://t.me/%s' % username.replace('@', ''))
+
+
+def save_views(username, pk):
+    bot = None
+    try:
+        bot = models.Bot.objects.get(username=username)
+    except Exception:
+        pass
+    if bot is not None:
+        try:
+            user = models.UserTg.objects.get(pk=int(pk))
+            models.BotViews.objects.create(bot=bot, user=user)
+        except Exception:
+            models.BotViews.objects.create(bot=bot)
+            pass
 
 
 def sort(res, ids):
