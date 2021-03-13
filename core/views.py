@@ -274,7 +274,7 @@ class Search(generics.GenericAPIView):
         sort(res, ids)
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'language': user.language},
+                                                             context={'user': user},
                                                              many=True
                                                              ).data, 'founded': count})
 
@@ -314,7 +314,7 @@ class Top(generics.GenericAPIView):
         sort(res, bot_ids)
 
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'language': user.language},
+                                                             context={'user': user},
                                                              many=True
                                                              ).data, 'founded': count})
 

@@ -59,13 +59,24 @@ class BotTgSerializer(serializers.ModelSerializer):
         return bot.save()
 
     def get_description(self, bot):
-        language = self.context.get("language")
-        if language == "ru":
-            return bot.description_ru
+        try:
+            language = self.context.get("user").language
+            if language == "ru":
+                return bot.description_ru
+        except AttributeError:
+            pass
         return bot.description_en
 
     def get_url(self, bot):
-        return "%s/tg/%s" % (BACKEND_URL, bot.username.replace("@", ""))
+        pk = None
+        try:
+            pk = self.context.get("user").pk
+        except AttributeError:
+            pass
+        url = "%s/tg/%s" % (BACKEND_URL, bot.username.replace("@", ""))
+        if pk is not None:
+            url = '%s?u=%s' % (url, pk)
+        return url
 
     class Meta:
         model = models.Bot
