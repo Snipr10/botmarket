@@ -306,10 +306,14 @@ class Top(generics.GenericAPIView):
             pass
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         month_date = date.today() + relativedelta(months=-months)
-        bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
-                       .values('bot_id').annotate(
-            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
-                       )
+        ## by like
+        # bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
+        #                .values('bot_id').annotate(
+        #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
+        #                )
+        bot_ids = list(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
+                                                      bot__ready_to_use=True).values('bot_id').annotate(
+            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
         count = len(bot_ids)
         bot_ids = bot_ids[start:end]
         res = list(self.queryset_bot.filter(id__in=bot_ids))
