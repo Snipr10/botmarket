@@ -1,11 +1,4 @@
-import datetime
-from typing import List
-
-from django.conf import settings
-
-from rest_framework import exceptions, serializers, status
-from rest_framework.exceptions import ParseError
-from rest_framework.fields import set_value
+from rest_framework import serializers
 
 from botmarket.settings import BACKEND_URL
 from . import models

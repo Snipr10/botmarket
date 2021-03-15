@@ -1,24 +1,20 @@
 import asyncio
 import concurrent.futures
 
-from datetime import timezone, date
+from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
 
 # Create your views here.
 from django.shortcuts import redirect
-from django.utils.datastructures import MultiValueDictKeyError
 from rest_framework.response import Response
 from rest_framework import generics, permissions
 
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
-from django.db.models import Avg, Sum, Count
-from django.db.models.functions import Coalesce
-from datetime import timedelta
+from django.db.models import Avg, Count
 
-from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model
-from core.models import BotLike
+from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model, delete_from_elastic
 
 
 class BotList(generics.GenericAPIView):
@@ -280,12 +276,22 @@ class Search(generics.GenericAPIView):
                                                              many=True
                                                              ).data, 'founded': count})
 
-
+# FOR TEST
 class UpdateElastic(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         for bot in models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True):
             add_to_elastic(bot.id, bot.tags, "{ru} {en}".format(ru=bot.description_ru,
                                                                 en=bot.description_en))
+        for bot in models.Bot.objects.filter(ready_to_use=False):
+            try:
+                delete_from_elastic(bot.id)
+            except Exception:
+                pass
+        for bot in models.Bot.objects.filter(is_active=False):
+            try:
+                delete_from_elastic(bot.id)
+            except Exception:
+                pass
         return Response("Ok")
 
 
