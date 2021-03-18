@@ -1,6 +1,6 @@
 
 from datetime import datetime
-from elasticsearch import Elasticsearch
+from elasticsearch import Elasticsearch, NotFoundError
 
 # https://elasticsearch-py.readthedocs.io/en/v7.11.0/
 # default connect to localhost:9200
