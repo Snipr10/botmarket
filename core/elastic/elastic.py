@@ -18,7 +18,10 @@ def get_body(tags, text):
 
 
 def delete_from_elastic(id):
-    es.delete(index=index, id=id)
+    try:
+        es.delete(index=index, id=id)
+    except NotFoundError:
+        pass
 
 
 def add_to_elastic_bot_model(bot):
