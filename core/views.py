@@ -306,6 +306,10 @@ class Top(generics.GenericAPIView):
         end = 9
         try:
             months = int(request.data["months"])
+        except KeyError:
+            pass
+        try:
+            months = int(request.data["months"])
             start = int(request.data["start"]) - 1
             end = int(request.data["end"]) - 1
         except KeyError:
