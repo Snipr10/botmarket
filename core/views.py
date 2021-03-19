@@ -355,6 +355,12 @@ def save_views(username, pk):
         bot = models.Bot.objects.get(username=username)
     except Exception:
         pass
+
+    if bot is None:
+        try:
+            bot = models.Bot.objects.get(username='@'+username)
+        except Exception:
+            pass
     if bot is not None:
         try:
             user = models.UserTg.objects.get(pk=int(pk))
