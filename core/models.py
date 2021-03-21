@@ -6,10 +6,49 @@ from django.db import models
 # Create your models here.
 from botmarket.settings import SUPPORT_URL, SUPPORT_USER_URL
 from core.elastic.elastic import delete_from_elastic
+from rest_framework.authtoken.models import Token
 
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
+
+    def _create_user(self, phone_id, password, **extra_fields):
+        """
+        Creates and saves a User with the given email and password.
+        """
+        if not phone_id:
+            raise ValueError("The given email must be set")
+        phone_id = self.normalize_email(phone_id)
+        user = self.model(phone_id=phone_id, **extra_fields)
+        user.set_password(password)
+        user.save(using=self._db)
+        return user
+
+    def create_user(self, phone_id, password=None, **extra_fields):
+        if password is None:
+            password = "phone_id" + phone_id
+        return self._create_user(phone_id, password, **extra_fields)
+
+    def create_superuser(self, phone_id, password, **extra_fields):
+        extra_fields.setdefault("is_superuser", True)
+        extra_fields.setdefault("is_staff", True)
+        if extra_fields.get("is_superuser") is not True:
+            raise ValueError("Superuser must have is_superuser=True.")
+        return self._create_user(phone_id, password, **extra_fields)
+
+
+class User(AbstractBaseUser):
+    phone_id = models.CharField(max_length=150, null=True, blank=True, unique=True)
+    first_name = models.CharField(max_length=150, null=True, blank=True)
+    last_name = models.CharField(max_length=150, null=True, blank=True)
+    is_staff = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+    is_superuser = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False)
+    last_login = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    objects = UserManager()
+
+    USERNAME_FIELD = "phone_id"
 
 
 class UserTg(models.Model):

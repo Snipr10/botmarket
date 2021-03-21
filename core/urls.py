@@ -14,16 +14,22 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from core import views
-from django.urls import path
+from django.urls import include, path
 
 
 def trigger_error(request):
     division_by_zero = 1 / 0
 
 
+iphone = [
+    path("signup/", views.SignUpView.as_view(), name="sign-up"),
+    path("signin/", views.SignInView.as_view(), name="sign-in"),
+    path("tipidor/", views.Tipidor.as_view(), name="sign-in"),
+]
+
+
 urlpatterns = [
     path('sentry-debug/', trigger_error),
-
     path("<int:pk>/like/<str:bot_username>", views.LikeView.as_view(), name="/"),
     path("<int:pk>/rating/<str:bot_username>", views.RaitingView.as_view(), name="/"),
     path("<int:pk>/comment/<str:bot_username>", views.CommentView.as_view(), name="/"),
@@ -34,11 +40,13 @@ urlpatterns = [
     path("<str:bot_username>/likes/", views.Likes.as_view(), name="/"),
     path("<str:bot_username>/comments/", views.Comments.as_view(), name="/"),
     path("<str:bot_username>/ratings/", views.Ratings.as_view(), name="/"),
-
     path("search/<int:pk>", views.Search.as_view(), name="/"),
     path("top/<int:pk>", views.Top.as_view(), name="/"),
-
     path("update_elasctic/", views.UpdateElastic.as_view(), name="/"),
     path("deal", views.Deal.as_view(), name="/"),
 
+    # iphone
+    path("iphone/", include(iphone)),
 ]
+
+

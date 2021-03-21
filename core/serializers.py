@@ -1,4 +1,7 @@
-from rest_framework import serializers
+import datetime
+from rest_framework import exceptions, generics, permissions, status
+from rest_framework.authtoken.models import Token
+from rest_framework import serializers, status
 
 from botmarket.settings import BACKEND_URL
 from . import models
@@ -147,4 +150,54 @@ class DealSerializer(serializers.ModelSerializer):
     class Meta:
         model = Deal
         fields = '__all__'
+
+
+# IPHONE
+
+class UserSignUpSerializer(serializers.ModelSerializer):
+    phone_id = serializers.CharField(max_length=20)
+
+    def create(self, validated_data):
+        phone_id = validated_data["phone_id"]
+        try:
+            user = models.User.objects.get(phone_id=phone_id)
+            if user.is_active:
+                raise serializers.ValidationError({"message": "User with this phone_id already exists"},
+                                                  status.HTTP_400_BAD_REQUEST)
+        except models.User.DoesNotExist:
+            user = models.User.objects.create_user(**validated_data)
+        return user
+
+    class Meta:
+        model = models.User
+        fields = ("first_name", "last_name", "phone_id")
+
+
+class SignInSerializer(serializers.Serializer):
+    def update(self, instance, validated_data):
+        pass
+
+    phone_id = serializers.CharField()
+    password = serializers.CharField(max_length=36)
+
+    def create(self, validated_data):
+        try:
+            user = models.User.objects.get(phone_id=validated_data["phone_id"], deleted=False)
+        except models.User.DoesNotExist:
+            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials."})
+        if not user.check_password(self.validated_data["password"]) or user.deleted:
+            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials."})
+        elif not user.is_active:
+            raise exceptions.AuthenticationFailed({"message": "User registration is not completed"})
+        user.last_login = datetime.datetime.utcnow()
+        user.save()
+        token, _ = Token.objects.get_or_create(user=user)
+        return user, token
+
+
+class UserDataSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = models.User
+        fields = ("first_name", "last_name", "phone_id")
 

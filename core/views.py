@@ -8,7 +8,7 @@ from django.db import IntegrityError
 # Create your views here.
 from django.shortcuts import redirect
 from rest_framework.response import Response
-from rest_framework import generics, permissions
+from rest_framework import generics, permissions, status
 
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
@@ -372,3 +372,35 @@ def save_views(username, pk):
 
 def sort(res, ids):
     res.sort(key=lambda t: ids.index(t.id))
+
+
+
+# IPHONE
+
+
+class SignUpView(generics.CreateAPIView):
+    serializer_class = serializers.UserSignUpSerializer
+    queryset = models.User.objects.filter()
+    permission_classes = [permissions.AllowAny]
+
+
+class SignInView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.SignInSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, token = serializer.save()
+        user = models.User.objects.get(pk = user.pk)
+        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key}, status=status.HTTP_200_OK)
+
+
+class Tipidor(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.SignInSerializer
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        return Response({"answer": user.first_name + " ti pidor"}, status=status.HTTP_200_OK)

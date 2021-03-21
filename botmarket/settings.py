@@ -42,7 +42,7 @@ SECRET_KEY = '$*cjg1j!ox&c!ygn40a0^lp_qw#5hhhq_j%fr!6d&qp%_lvs_9'
 
 # TODO env
 # if want env  DEBUG = os.getenv("DJANGO_DEBUG", False)
-DEBUG = False
+DEBUG = True
 
 ALLOWED_HOSTS = ['*']
 
@@ -58,6 +58,8 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'rest_framework',
+    'rest_framework.authtoken',
     'core'
 ]
 
@@ -74,6 +76,16 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'botmarket.urls'
+
+
+REST_FRAMEWORK = {
+    'DEFAULT_AUTHENTICATION_CLASSES': [
+        'rest_framework.authentication.TokenAuthentication',
+    ]
+
+}
+
+AUTH_USER_MODEL = 'core.User'
 
 TEMPLATES = [
     {
@@ -96,14 +108,23 @@ WSGI_APPLICATION = 'botmarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
+# DATABASES = {
+#     'default': {
+#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
+#         'NAME': 'bbz406smsa7jzzgeiixc',
+#         'USER': 'ubdiczgpbehylbnxjud9',
+#         'PASSWORD': 'khkj3C9V2IMkom0Dmpkm',
+#         'HOST': 'bbz406smsa7jzzgeiixc-postgresql.services.clever-cloud.com',
+#         'PORT': '5675',
+#     }
+# }
 # now sqlite3
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'NAME': BASE_DIR / 'mydatabase1.db',
     }
 }
-
 # TODO cache
 # if want cache
 # add decorator https://pypi.org/project/django-cache/
