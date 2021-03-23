@@ -276,6 +276,7 @@ class Search(generics.GenericAPIView):
                                                              many=True
                                                              ).data, 'founded': count})
 
+
 # FOR TEST
 class UpdateElastic(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
@@ -358,7 +359,7 @@ def save_views(username, pk):
 
     if bot is None:
         try:
-            bot = models.Bot.objects.get(username='@'+username)
+            bot = models.Bot.objects.get(username='@' + username)
         except Exception:
             pass
     if bot is not None:
@@ -374,7 +375,6 @@ def sort(res, ids):
     res.sort(key=lambda t: ids.index(t.id))
 
 
-
 # IPHONE
 
 
@@ -383,7 +383,15 @@ class SignUpView(generics.CreateAPIView):
     queryset = models.User.objects.filter()
     permission_classes = [permissions.AllowAny]
 
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, token = serializer.save()
+        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
+                        status=status.HTTP_200_OK)
 
+
+# not used
 class SignInView(generics.CreateAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.SignInSerializer
@@ -392,8 +400,9 @@ class SignInView(generics.CreateAPIView):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         user, token = serializer.save()
-        user = models.User.objects.get(pk = user.pk)
-        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key}, status=status.HTTP_200_OK)
+        user = models.User.objects.get(pk=user.pk)
+        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
+                        status=status.HTTP_200_OK)
 
 
 class Tipidor(generics.ListAPIView):

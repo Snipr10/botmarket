@@ -161,12 +161,13 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         phone_id = validated_data["phone_id"]
         try:
             user = models.User.objects.get(phone_id=phone_id)
-            if user.is_active:
-                raise serializers.ValidationError({"message": "User with this phone_id already exists"},
-                                                  status.HTTP_400_BAD_REQUEST)
+            # if user.is_active:
+            #     raise serializers.ValidationError({"message": "User with this phone_id already exists"},
+            #                                       status.HTTP_400_BAD_REQUEST)
         except models.User.DoesNotExist:
             user = models.User.objects.create_user(**validated_data)
-        return user
+        token, _ = Token.objects.get_or_create(user=user)
+        return user, token
 
     class Meta:
         model = models.User
