@@ -155,7 +155,7 @@ class DealSerializer(serializers.ModelSerializer):
 # IPHONE
 
 class UserSignUpSerializer(serializers.ModelSerializer):
-    phone_id = serializers.CharField(max_length=20)
+    phone_id = serializers.CharField(max_length=150)
 
     def create(self, validated_data):
         phone_id = validated_data["phone_id"]
@@ -178,8 +178,8 @@ class SignInSerializer(serializers.Serializer):
     def update(self, instance, validated_data):
         pass
 
-    phone_id = serializers.CharField()
-    password = serializers.CharField(max_length=36)
+    phone_id = serializers.CharField(max_length=150)
+    password = serializers.CharField(max_length=150)
 
     def create(self, validated_data):
         try:
