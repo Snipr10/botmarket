@@ -4,8 +4,9 @@ from elasticsearch import Elasticsearch, NotFoundError
 
 # https://elasticsearch-py.readthedocs.io/en/v7.11.0/
 # default connect to localhost:9200
+from botmarket.settings import ELASTIC_HOST
 
-es = Elasticsearch()
+es = Elasticsearch(hosts=ELASTIC_HOST)
 index = "bot-test"
 
 

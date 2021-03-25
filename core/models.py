@@ -230,3 +230,11 @@ class Sessions(models.Model):
     def __str__(self):
         return str(self.name)
 
+
+class IphoneSearch(models.Model):
+    tags = models.CharField(max_length=150)
+    start = models.IntegerField(default=0)
+    end = models.IntegerField(default=4)
+    count = models.IntegerField(default=0)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+

@@ -56,7 +56,7 @@ class BotTgSerializer(serializers.ModelSerializer):
 
     def get_description(self, bot):
         try:
-            language = self.context.get("user").language
+            language = self.context.get("language")
             if language == "ru":
                 return bot.description_ru
         except AttributeError:
@@ -175,11 +175,11 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
 
 class SignInSerializer(serializers.Serializer):
-    def update(self, instance, validated_data):
-        pass
-
     phone_id = serializers.CharField(max_length=150)
     password = serializers.CharField(max_length=150)
+
+    def update(self, instance, validated_data):
+        pass
 
     def create(self, validated_data):
         try:
@@ -201,4 +201,16 @@ class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = ("first_name", "last_name", "phone_id")
+
+
+class IphoneSearchSerializer(serializers.Serializer):
+    tags = serializers.CharField(max_length=150)
+    start = serializers.IntegerField(default=0)
+    end = serializers.IntegerField(default=4)
+    user = serializers.PrimaryKeyRelatedField(queryset=models.User.objects.all(), write_only=True)
+
+    class Meta:
+        model = models.IphoneSearch
+        fields = ("tags", "start", "end", "user")
+
 

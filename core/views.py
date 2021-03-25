@@ -15,6 +15,7 @@ from rest_framework.generics import get_object_or_404
 from django.db.models import Avg, Count
 
 from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model, delete_from_elastic
+from core.serializers import IphoneSearchSerializer
 
 
 class BotList(generics.GenericAPIView):
@@ -37,7 +38,7 @@ class BotTg(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
-                                                 many=True, context={"user": user}
+                                                 many=True, context={"user": user, "language": user.language}
                                                  )
         return Response({"bot": serializer.data})
 
@@ -45,7 +46,8 @@ class BotTg(generics.GenericAPIView):
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         if request.data.get("username") is None:
             request.data["username"] = kwargs['bot_username']
-        serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user})
+        serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user,
+                                                                                           "language": user.language})
         serializer.is_valid(raise_exception=True)
         try:
             serializer.save()
@@ -70,7 +72,8 @@ class BotTg(generics.GenericAPIView):
         if bot.is_reply:
             # !!! only after test
             add_to_elastic_bot_model(bot)
-        return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request}).data})
+        return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request,
+                                                                                      "language": user.language}).data})
 
 
 class UserList(generics.GenericAPIView):
@@ -253,11 +256,26 @@ class CommentView(LikeView):
             return Response("Comment not exist")
 
 
-class Search(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    # serializer_class = serializers.BotTgSerializer
+class SearchAbstract(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def result_data(self, data):
+        tags = data["tags"]
+        try:
+            start = int(data["start"]) - 1
+            end = int(data["end"]) - 1
+        except KeyError:
+            start = 0
+            end = 4
+        ids, count = search_elastic(tags, start, end - start + 1)
+        res = list(self.queryset_bot.filter(id__in=ids))
+        sort(res, ids)
+        return res, count, tags, start, end
+
+
+class Search(SearchAbstract):
+    permission_classes = [permissions.AllowAny]
 
     def post(self, request, *args, **kwargs):
         tags = request.data["tags"]
@@ -272,7 +290,7 @@ class Search(generics.GenericAPIView):
         sort(res, ids)
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user},
+                                                             context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
@@ -331,7 +349,7 @@ class Top(generics.GenericAPIView):
         sort(res, bot_ids)
 
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user},
+                                                             context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
@@ -413,3 +431,19 @@ class Tipidor(generics.ListAPIView):
         user = request.user
 
         return Response({"answer": user.first_name + " ti pidor"}, status=status.HTTP_200_OK)
+
+
+class SearchIphone(SearchAbstract):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        res, count, tags, start, end = self.result_data(request.query_params)
+        models.IphoneSearch.objects.create(tags=tags, start=start, end=end, user=user, count=count)
+        # to test
+        # res = models.Bot.objects.all()
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={"language": "en"},
+                                                             many=True
+                                                             ).data, 'founded': count})
+

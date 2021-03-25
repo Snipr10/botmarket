@@ -24,7 +24,8 @@ def trigger_error(request):
 iphone = [
     path("signup/", views.SignUpView.as_view(), name="sign-up"),
     path("signin/", views.SignInView.as_view(), name="sign-in"),
-    path("tipidor/", views.Tipidor.as_view(), name="sign-in"),
+    path("tipidor/", views.Tipidor.as_view(), name="tipidor"),
+    path("search/", views.SearchIphone.as_view(), name="search"),
 ]
 
 
