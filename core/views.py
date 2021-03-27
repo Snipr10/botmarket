@@ -459,16 +459,16 @@ class TopIphone(Top):
                                                    bot__is_deleted=False)
 
     def get_queryset(self):
-        months = self.request.query_params.get('months', 1)
+        months = int(self.request.query_params.get('months', 1))
         month_date = date.today() + relativedelta(months=-months)
         queryset_view = self.queryset_view.filter(datetime__gte=month_date)
         return queryset_view
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        start = self.request.query_params.get('start', 1) - 1
-        end = self.request.query_params.get('end', 10) - 1
-        months = self.request.query_params.get('months', 1)
+        start = int(self.request.query_params.get('start', 1)) - 1
+        end = int(self.request.query_params.get('end', 10)) - 1
+        months = int(self.request.query_params.get('months', 1))
         res, count = self.top_bots(self.get_queryset(), start, end)
         models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
         return Response({'bots': serializers.BotTgSerializer(res,
