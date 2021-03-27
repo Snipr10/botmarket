@@ -200,7 +200,7 @@ class UserDataSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("first_name", "last_name", "phone_id")
+        fields = ("first_name", "last_name", "phone_id", "language")
 
 
 class IphoneSearchSerializer(serializers.Serializer):

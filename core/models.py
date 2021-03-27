@@ -46,6 +46,7 @@ class User(AbstractBaseUser):
     is_superuser = models.BooleanField(default=False)
     deleted = models.BooleanField(default=False)
     last_login = models.DateTimeField(auto_now_add=True, null=True, blank=True)
+    language = models.CharField(max_length=150, default="en")
     objects = UserManager()
 
     USERNAME_FIELD = "phone_id"

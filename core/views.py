@@ -351,7 +351,7 @@ class Top(generics.GenericAPIView):
 
     def top_bots(self, bot_views, start, end):
         bot_ids = list(bot_views.values('bot_id').annotate(
-                num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
         count = len(bot_ids)
         bot_ids = bot_ids[start:end]
         res = list(self.queryset_bot.filter(id__in=bot_ids))
@@ -448,7 +448,7 @@ class SearchIphone(SearchAbstract):
         # to test
         # res = models.Bot.objects.all()
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={"language": "en"},
+                                                             context={"language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
@@ -472,7 +472,18 @@ class TopIphone(Top):
         res, count = self.top_bots(self.get_queryset(), start, end)
         models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user, "language": 'ru'},
+                                                             context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
+
+class UserView(generics.ListAPIView, generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.UserDataSerializer
+    queryset = models.User.objects.filter(deleted=False)
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.serializer_class(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
