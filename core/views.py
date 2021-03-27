@@ -340,18 +340,23 @@ class Top(generics.GenericAPIView):
         #                .values('bot_id').annotate(
         #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
         #                )
-        bot_ids = list(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
-                                                      bot__ready_to_use=True).values('bot_id').annotate(
-            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
-        count = len(bot_ids)
-        bot_ids = bot_ids[start:end]
-        res = list(self.queryset_bot.filter(id__in=bot_ids))
-        sort(res, bot_ids)
+
+        res, count = self.top_bots(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
+                                                                  bot__ready_to_use=True), start, end)
 
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
+
+    def top_bots(self, bot_views, start, end):
+        bot_ids = list(bot_views.values('bot_id').annotate(
+                num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+        count = len(bot_ids)
+        bot_ids = bot_ids[start:end]
+        res = list(self.queryset_bot.filter(id__in=bot_ids))
+        sort(res, bot_ids)
+        return res, count
 
 
 class Deal(generics.CreateAPIView):
@@ -444,6 +449,30 @@ class SearchIphone(SearchAbstract):
         # res = models.Bot.objects.all()
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={"language": "en"},
+                                                             many=True
+                                                             ).data, 'founded': count})
+
+
+class TopIphone(Top):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
+                                                   bot__is_deleted=False)
+
+    def get_queryset(self):
+        months = self.request.query_params.get('months', 1)
+        month_date = date.today() + relativedelta(months=-months)
+        queryset_view = self.queryset_view.filter(datetime__gte=month_date)
+        return queryset_view
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        start = self.request.query_params.get('start', 1) - 1
+        end = self.request.query_params.get('end', 10) - 1
+        months = self.request.query_params.get('months', 1)
+        res, count = self.top_bots(self.get_queryset(), start, end)
+        models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={'user': user, "language": 'ru'},
                                                              many=True
                                                              ).data, 'founded': count})
 

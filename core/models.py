@@ -165,6 +165,7 @@ class BotViews(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE, blank=True, null=True)
     bot = models.ForeignKey(Bot, on_delete=models.CASCADE)
     datetime = models.DateTimeField(auto_now_add=True)
+    user_iphone = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
 
 class Deal(models.Model):
@@ -231,10 +232,19 @@ class Sessions(models.Model):
         return str(self.name)
 
 
-class IphoneSearch(models.Model):
-    tags = models.CharField(max_length=150)
+class IphoneRequest(models.Model):
     start = models.IntegerField(default=0)
     end = models.IntegerField(default=4)
     count = models.IntegerField(default=0)
     user = models.ForeignKey(to=User, on_delete=models.CASCADE)
 
+    class Meta:
+        abstract = True
+
+
+class IphoneSearch(IphoneRequest):
+    tags = models.CharField(max_length=150)
+
+
+class IphoneTop(IphoneRequest):
+    months = models.IntegerField(default=1)
