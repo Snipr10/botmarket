@@ -502,33 +502,3 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
             return self.retrieve(request, *args, **kwargs)
         except AssertionError:
             return self.list(request, *args, **kwargs)
-#     user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-#     if request.data.get("username") is None:
-#         request.data["username"] = kwargs['bot_username']
-#     serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user,
-#                                                                                        "language": user.language})
-#     serializer.is_valid(raise_exception=True)
-#     try:
-#         serializer.save()
-#     except IntegrityError:
-#         return self.patch(request, *args, **kwargs)
-#     bot = serializer.data
-#     # !!! only after test
-#     # add_to_elastic_bot_data(bot)
-#     return Response({"bot": bot})
-#
-# def patch(self, request, *args, **kwargs):
-#     user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-#     bot = get_object_or_404(self.queryset_bot, username=kwargs['bot_username'])
-#     if bot.user != user:
-#         return Response("bot's owner is not this user")
-#     if request.data.get("username") is None:
-#         request.data["username"] = kwargs['bot_username']
-#     serializer = self.get_serializer(data=request.data, partial=True)
-#     serializer.is_valid(raise_exception=True)
-#     serializer.update(bot, request.data)
-#     bot = self.queryset_bot.get(username=kwargs['bot_username'])
-#     if bot.is_reply:
-#         # !!! only after test
-#         add_to_elastic_bot_model(bot)
-#     return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request,
