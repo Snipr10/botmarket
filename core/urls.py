@@ -28,6 +28,8 @@ iphone = [
     path("tipidor/", views.Tipidor.as_view(), name="tipidor"),
     path("search/", views.SearchIphone.as_view(), name="search"),
     path("top/", views.TopIphone.as_view(), name="search"),
+    path("bot/", views.BotView.as_view(), name="all my bots"),
+    path("bot/<int:pk>/", views.BotView.as_view(), name="all my bots"),
 
 ]
 

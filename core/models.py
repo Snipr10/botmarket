@@ -98,6 +98,7 @@ class Bot(models.Model):
     warnings = models.IntegerField(default=0)
     is_founded = models.BooleanField(default=True)
     is_being_checked = models.BooleanField(default=False)
+    user_iphone = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):

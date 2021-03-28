@@ -5,63 +5,23 @@ from rest_framework import serializers, status
 
 from botmarket.settings import BACKEND_URL
 from . import models
+from .elastic.elastic import delete_from_elastic, add_to_elastic_bot_model
 from .models import BotLike, Deal
 
 
-class BotTgSerializer(serializers.ModelSerializer):
-    username = serializers.CharField(max_length=150, required=True)
-    first_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    first_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    last_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    last_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    phone = serializers.CharField(max_length=150, required=False, allow_blank=True)
-    is_user = serializers.BooleanField()
-    is_active = serializers.BooleanField()
-    is_ban = serializers.BooleanField()
-    is_deleted = serializers.BooleanField()
-    is_reply = serializers.BooleanField()
-    ready_to_use = serializers.BooleanField()
-    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description = serializers.SerializerMethodField()
+class BotsListSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
-
-    def create(self, validated_data):
-        bot = models.Bot.objects.create(**validated_data)
-        user = self.context.get("user")
-        bot.user = user
-        bot.save()
-        return bot
-
-    def update(self, bot, validated_data):
-        # bot.username = validated_data.get("username", bot.username)
-        bot.first_name_en = validated_data.get("first_name_en", bot.first_name_en)
-        bot.first_name_ru = validated_data.get("first_name_ru", bot.first_name_ru)
-        bot.last_name_en = validated_data.get("last_name_en", bot.last_name_en)
-        bot.last_name_ru = validated_data.get("last_name_ru", bot.last_name_ru)
-        bot.phone = validated_data.get("phone", bot.phone)
-        bot.description_ru = validated_data.get("description_ru", bot.description_ru)
-        bot.description_en = validated_data.get("description_en", bot.description_en)
-        bot.tags = validated_data.get("tags", bot.tags)
-        bot.is_user = validated_data.get("is_user", bot.is_user)
-        bot.is_deleted = validated_data.get("is_deleted", bot.is_deleted)
-        bot.ready_to_use = validated_data.get("ready_to_use", bot.ready_to_use)
-
-        # bot.is_active = validated_data.get("is_active", bot.is_active)
-        # bot.is_ban = validated_data.get("is_ban", bot.is_ban)
-        # bot.is_reply = validated_data.get("is_reply", bot.is_reply)
-
-        return bot.save()
-
-    def get_description(self, bot):
-        try:
-            language = self.context.get("language")
-            if language == "ru":
-                return bot.description_ru
-        except AttributeError:
-            pass
-        return bot.description_en
+    username = serializers.CharField(max_length=150, required=False)
+    first_name_en = serializers.CharField(max_length=150, required=False)
+    first_name_ru = serializers.CharField(max_length=150, required=False)
+    last_name_en = serializers.CharField(max_length=150, required=False)
+    last_name_ru = serializers.CharField(max_length=150, required=False)
+    phone = serializers.CharField(max_length=150, required=False)
+    is_user = serializers.BooleanField(default=False)
+    is_active = serializers.BooleanField(default=True)
+    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
+    description_ru = serializers.CharField(max_length=4000, required=False)
+    description_en = serializers.CharField(max_length=4000, required=False)
 
     def get_url(self, bot):
         pk = None
@@ -74,10 +34,112 @@ class BotTgSerializer(serializers.ModelSerializer):
             url = '%s?u=%s' % (url, pk)
         return url
 
+    def update(self, bot, validated_data):
+        bot.first_name_en = validated_data.get("first_name_en", bot.first_name_en)
+        bot.first_name_ru = validated_data.get("first_name_ru", bot.first_name_ru)
+        bot.last_name_en = validated_data.get("last_name_en", bot.last_name_en)
+        bot.last_name_ru = validated_data.get("last_name_ru", bot.last_name_ru)
+        bot.phone = validated_data.get("phone", bot.phone)
+        bot.description_ru = validated_data.get("description_ru", bot.description_ru)
+        bot.description_en = validated_data.get("description_en", bot.description_en)
+        bot.tags = validated_data.get("tags", bot.tags)
+        bot.is_user = validated_data.get("is_user", bot.is_user)
+        bot.is_active = validated_data.get("is_active", bot.is_active)
+
+        return bot.save()
+
+    class Meta:
+        model = models.Bot
+        fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
+                  "phone", "is_user", "is_active",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
+
+
+class BotTgSerializer(BotsListSerializer):
+    description = serializers.SerializerMethodField()
+
+    def create(self, validated_data):
+        bot = models.Bot.objects.create(**validated_data)
+        user = self.context.get("user")
+        bot.user = user
+        bot.save()
+        return bot
+
+    def get_description(self, bot):
+        try:
+            language = self.context.get("language")
+            if language == "ru":
+                return bot.description_ru
+        except AttributeError:
+            pass
+        return bot.description_en
+
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
                   "phone", "is_user", "is_active", "description",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
+
+
+class BotsListSerializerIphone(BotsListSerializer):
+    url = serializers.SerializerMethodField()
+    username = serializers.CharField(max_length=150, required=True)
+    first_name_en = serializers.CharField(max_length=150, required=False)
+    first_name_ru = serializers.CharField(max_length=150, required=False)
+    last_name_en = serializers.CharField(max_length=150, required=False)
+    last_name_ru = serializers.CharField(max_length=150, required=False)
+    phone = serializers.CharField(max_length=150, required=False)
+    is_user = serializers.BooleanField(default=False)
+    is_active = serializers.BooleanField(default=True)
+    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
+    description_ru = serializers.CharField(max_length=4000, required=False)
+    description_en = serializers.CharField(max_length=4000, required=False)
+
+    def create(self, validated_data):
+        user_iphone = self.context["request"].user
+        username = validated_data["username"]
+        if models.Bot.objects.filter(username=username).exists():
+            raise serializers.ValidationError("Bot already exist")
+        instance = super().create(validated_data)
+        instance.user_iphone = user_iphone
+        instance.save()
+        return instance
+
+    def get_url(self, bot):
+        pk = None
+        try:
+            pk = self.context.get("user").pk
+        except AttributeError:
+            pass
+        url = "%s/tg/%s" % (BACKEND_URL, bot.username.replace("@", ""))
+        if pk is not None:
+            url = '%s?u=%s' % (url, pk)
+        return url
+
+    def update(self, instance, validated_data):
+        instance.first_name_en = validated_data.get("first_name_en", instance.first_name_en)
+        instance.first_name_ru = validated_data.get("first_name_ru", instance.first_name_ru)
+        instance.last_name_en = validated_data.get("last_name_en", instance.last_name_en)
+        instance.last_name_ru = validated_data.get("last_name_ru", instance.last_name_ru)
+        instance.phone = validated_data.get("phone", instance.phone)
+        instance.description_ru = validated_data.get("description_ru", instance.description_ru)
+        instance.description_en = validated_data.get("description_en", instance.description_en)
+        instance.tags = validated_data.get("tags", instance.tags)
+        instance.is_user = validated_data.get("is_user", instance.is_user)
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        if instance.is_active and instance.is_deleted:
+            instance.is_deleted = False
+        if not instance.is_active:
+            delete_from_elastic(instance.id)
+        if instance.is_active:
+            add_to_elastic_bot_model(instance)
+        instance.save()
+        return instance
+
+    class Meta:
+        model = models.Bot
+        fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
+                  "phone", "is_user", "is_active",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
@@ -146,7 +208,6 @@ class CommentsSerializer(serializers.ModelSerializer):
 
 
 class DealSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = Deal
         fields = '__all__'
@@ -197,7 +258,6 @@ class SignInSerializer(serializers.Serializer):
 
 
 class UserDataSerializer(serializers.ModelSerializer):
-
     class Meta:
         model = models.User
         fields = ("first_name", "last_name", "phone_id", "language")
@@ -212,5 +272,3 @@ class IphoneSearchSerializer(serializers.Serializer):
     class Meta:
         model = models.IphoneSearch
         fields = ("tags", "start", "end", "user")
-
-
