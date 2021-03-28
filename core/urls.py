@@ -30,6 +30,8 @@ iphone = [
     path("top/", views.TopIphone.as_view(), name="search"),
     path("bot/", views.BotView.as_view(), name="all my bots"),
     path("bot/<int:pk>/", views.BotView.as_view(), name="all my bots"),
+    path("generate_code/", views.CreateCodeForAddPhoneToTg.as_view(), name="code"),
+    path("phone_and_tg/", views.PhoneToTg.as_view(), name="PhoneToBot")
 
 ]
 
@@ -42,6 +44,7 @@ urlpatterns = [
     path("<int:pk>/bot_tg/<str:bot_username>", views.BotTg.as_view(), name="/"),
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("bots_tg/", views.BotList.as_view(), name="/"),
+
     path("users_tg/", views.UserList.as_view(), name="/"),
     path("<str:bot_username>/likes/", views.Likes.as_view(), name="/"),
     path("<str:bot_username>/comments/", views.Comments.as_view(), name="/"),

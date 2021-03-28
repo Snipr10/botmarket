@@ -4,9 +4,11 @@ import concurrent.futures
 from datetime import date
 from dateutil.relativedelta import relativedelta
 from django.db import IntegrityError
+from django.utils.crypto import get_random_string
 
 # Create your views here.
 from django.shortcuts import redirect
+from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
@@ -495,10 +497,83 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
     queryset = models.Bot.objects.filter()
 
     def get_queryset(self):
-        return self.queryset.filter(user_iphone=self.request.user)
+        user_tg = models.UserTg.objects.filter(user_phone = self.request.user).first()
+        if user_tg is None:
+            raise ValidationError("Please, add tg user")
+        return self.queryset.filter(user=user_tg)
 
     def get(self, request, *args, **kwargs):
         try:
             return self.retrieve(request, *args, **kwargs)
         except AssertionError:
             return self.list(request, *args, **kwargs)
+
+
+class CreateAddCodeForAddPhoneToTg(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if self.queryset_user.filter(user_phone=user).exists():
+            raise ValidationError("your phone already add")
+        user_id = int(request.data["id"])
+        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
+        user_tg = self.queryset_user.filter(user_id=user_id).first()
+        if user_tg is None:
+            raise ValidationError("user_tg not exist")
+
+        code = generate_code()
+        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
+        # sent code
+        return Response({code})
+
+class UserTgAndIphone(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def check_user(self, user):
+        if self.queryset_user.filter(user_phone=user).exists():
+            raise ValidationError("your phone already add")
+
+class CreateCodeForAddPhoneToTg(UserTgAndIphone):
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        self.check_user(user)
+        user_id = int(request.data["id"])
+        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
+        user_tg = self.queryset_user.filter(user_id=user_id).first()
+        if user_tg is None:
+            raise ValidationError("user_tg not exist")
+
+        code = generate_code()
+        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
+        # sent code
+        return Response({code})
+
+
+class PhoneToTg(UserTgAndIphone):
+
+    def post(self, request, *args, **kwargs):
+        code = request.data["code"]
+        user = request.user
+        verify_code = models.VerifyCode.objects.filter(is_active=True, code=code).first()
+        self.check_user(user)
+        user_tg = verify_code.user_tg
+        user_tg.user_phone.add(user)
+        stop_generate_code(verify_code)
+        return Response({"OK"})
+
+
+
+def generate_code():
+    unique_id = get_random_string(length=8)
+    if models.VerifyCode.objects.filter(is_active=True, code=unique_id).exists():
+        return generate_code()
+    return unique_id
+
+
+def stop_generate_code(verify_code):
+    verify_code.is_active = False
+    verify_code.save()

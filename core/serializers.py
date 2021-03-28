@@ -97,11 +97,14 @@ class BotsListSerializerIphone(BotsListSerializer):
 
     def create(self, validated_data):
         user_iphone = self.context["request"].user
+        user_tg = models.UserTg.objects.filter(user_phone=user_iphone).first()
+        if user_tg is None:
+            raise ValueError("please, add user Tg")
         username = validated_data["username"]
         if models.Bot.objects.filter(username=username).exists():
             raise serializers.ValidationError("Bot already exist")
         instance = super().create(validated_data)
-        instance.user_iphone = user_iphone
+        instance.user = user_tg
         instance.save()
         return instance
 

@@ -62,13 +62,14 @@ class UserTg(models.Model):
     is_ban = models.BooleanField(default=False)
     is_deleted = models.BooleanField(default=False)
     language = models.CharField(max_length=150, default="ru")
-
+    user_phone = models.ManyToManyField(User, blank=True)
     # def __str__(self):
     #     return {"user_id": self.user_id,
     #            "first_name": self.first_name,
     #            "last_name": self.last_name,
     #            "username": self.username
     #            }
+
     def __str__(self):
         return str(self.user_id)
 
@@ -98,7 +99,6 @@ class Bot(models.Model):
     warnings = models.IntegerField(default=0)
     is_founded = models.BooleanField(default=True)
     is_being_checked = models.BooleanField(default=False)
-    user_iphone = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):
@@ -250,3 +250,12 @@ class IphoneSearch(IphoneRequest):
 
 class IphoneTop(IphoneRequest):
     months = models.IntegerField(default=1)
+
+
+class VerifyCode(models.Model):
+    user_phone = models.ForeignKey(to=User, on_delete=models.CASCADE, related_name="user_phone_code")
+    user_tg = models.ForeignKey(to=UserTg, on_delete=models.CASCADE, related_name="user_tg_code")
+    code = models.CharField(max_length=8)
+    is_active = models.BooleanField(default=True)
+
+
