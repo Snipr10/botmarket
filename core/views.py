@@ -71,9 +71,6 @@ class BotTg(generics.GenericAPIView):
         serializer.is_valid(raise_exception=True)
         serializer.update(bot, request.data)
         bot = self.queryset_bot.get(username=kwargs['bot_username'])
-        if bot.is_reply:
-            # !!! only after test
-            add_to_elastic_bot_model(bot)
         return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request,
                                                                                       "language": user.language}).data})
 
