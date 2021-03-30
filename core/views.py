@@ -366,13 +366,15 @@ class Deal(generics.CreateAPIView):
 class TgMe(generics.CreateAPIView):
     def get(self, request, *args, **kwargs):
         username = self.kwargs['bot_username']
-        pk = request.GET.get("u")
+        pk_u = request.GET.get("u")
+        pk_i = request.GET.get("i")
+
         executor = concurrent.futures.ThreadPoolExecutor(2)
-        executor.submit(save_views, username, pk)
+        executor.submit(save_views, username, pk_u, pk_i)
         return redirect('https://t.me/%s' % username.replace('@', ''))
 
 
-def save_views(username, pk):
+def save_views(username, pk_u, pk_i):
     bot = None
     try:
         bot = models.Bot.objects.get(username=username)
@@ -386,8 +388,12 @@ def save_views(username, pk):
             pass
     if bot is not None:
         try:
-            user = models.UserTg.objects.get(pk=int(pk))
-            models.BotViews.objects.create(bot=bot, user=user)
+            if pk_u is not None:
+                user = models.UserTg.objects.get(pk=int(pk_u))
+                models.BotViews.objects.create(bot=bot, user=user)
+            elif pk_i is not None:
+                user = models.User.objects.get(pk=int(pk_u))
+                models.BotViews.objects.create(bot=bot, user_iphone=user)
         except Exception:
             models.BotViews.objects.create(bot=bot)
             pass

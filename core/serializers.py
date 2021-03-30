@@ -25,13 +25,17 @@ class BotsListSerializer(serializers.ModelSerializer):
 
     def get_url(self, bot):
         pk = None
+        user_type = "u"
         try:
-            pk = self.context.get("user").pk
+            user = self.context.get("user")
+            if type(self.context.get("user")) is models.User:
+                user_type = "i"
+            pk = user.pk
         except AttributeError:
             pass
         url = "%s/tg/%s" % (BACKEND_URL, bot.username.replace("@", ""))
         if pk is not None:
-            url = '%s?u=%s' % (url, pk)
+            url = '%s?%s=%s' % (url, user_type, pk)
         return url
 
     def update(self, bot, validated_data):
