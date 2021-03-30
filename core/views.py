@@ -500,7 +500,7 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
     queryset = models.Bot.objects.filter()
 
     def get_queryset(self):
-        user_tg = models.UserTg.objects.filter(user_phone = self.request.user).first()
+        user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
         if user_tg is None:
             raise ValidationError("Please, add tg user")
         return self.queryset.filter(user=user_tg)
@@ -531,6 +531,7 @@ class CreateAddCodeForAddPhoneToTg(generics.GenericAPIView):
         # sent code
         return Response({code})
 
+
 class UserTgAndIphone(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
@@ -538,6 +539,7 @@ class UserTgAndIphone(generics.GenericAPIView):
     def check_user(self, user):
         if self.queryset_user.filter(user_phone=user).exists():
             raise ValidationError("your phone already add")
+
 
 class CreateCodeForAddPhoneToTg(UserTgAndIphone):
 
@@ -567,7 +569,6 @@ class PhoneToTg(UserTgAndIphone):
         user_tg.user_phone.add(user)
         stop_generate_code(verify_code)
         return Response({"OK"})
-
 
 
 def generate_code():

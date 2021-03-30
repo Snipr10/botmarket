@@ -35,7 +35,6 @@ iphone = [
 
 ]
 
-
 urlpatterns = [
     path('sentry-debug/', trigger_error),
     path("<int:pk>/like/<str:bot_username>", views.LikeView.as_view(), name="/"),
@@ -57,5 +56,3 @@ urlpatterns = [
     # iphone
     path("iphone/", include(iphone)),
 ]
-
-
