@@ -1,5 +1,6 @@
 import asyncio
 import concurrent.futures
+import requests
 
 from datetime import date
 from dateutil.relativedelta import relativedelta
@@ -553,6 +554,15 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
             raise ValidationError("user_tg not exist")
 
         code = generate_code()
+        try:
+            post_data = {
+                "user_id": user_tg.pk,
+                "text": "Code " + str(code)
+            }
+            requests.post('https://botslist-bot.herokuapp.com/message', json=post_data)
+        except Exception as e:
+            print("can not send  " + str(e))
+
         models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
         # sent code
         return Response({code})
