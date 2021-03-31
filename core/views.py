@@ -13,6 +13,7 @@ from rest_framework.exceptions import ValidationError
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
+from botmarket.settings import SUPPORT_USER_URL
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
 from django.db.models import Avg, Count
@@ -559,7 +560,8 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
                 "user_id": user_tg.pk,
                 "text": "Code " + str(code)
             }
-            requests.post('https://botslist-bot.herokuapp.com/message', json=post_data)
+            requests.post(SUPPORT_USER_URL, json=post_data)
+            # response code 404
         except Exception as e:
             print("can not send  " + str(e))
 
@@ -569,7 +571,6 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
 
 
 class PhoneToTg(UserTgAndIphone):
-
     def post(self, request, *args, **kwargs):
         code = request.data["code"]
         user = request.user
@@ -579,6 +580,18 @@ class PhoneToTg(UserTgAndIphone):
         user_tg.user_phone.add(user)
         stop_generate_code(verify_code)
         return Response({"OK"})
+
+
+class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    serializer_class = serializers.UserTgSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user_phone=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.user_phone.remove(self.request.user)
 
 
 def generate_code():
