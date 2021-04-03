@@ -283,8 +283,6 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
     queryset = models.Bot.objects.filter()
 
     def get_queryset(self):
-        return self.queryset.filter()
-
         user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
         if user_tg is None:
             raise ValidationError("Please, add tg user")
