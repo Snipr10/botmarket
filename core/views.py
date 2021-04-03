@@ -18,21 +18,10 @@ from core import models, serializers
 from rest_framework.generics import get_object_or_404
 from django.db.models import Avg, Count
 
-from core.elastic.elastic import add_to_elastic, search_elastic, add_to_elastic_bot_model, delete_from_elastic
-from core.serializers import IphoneSearchSerializer
+from core.elastic.elastic import add_to_elastic, search_elastic, delete_from_elastic
 
 
-class BotList(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = serializers.BotTgSerializer
-    queryset_bot = models.Bot.objects.filter(is_active=True)
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def get(self, request, *args, **kwargs):
-        return Response({"bots": self.get_serializer(self.queryset_bot, many=True,
-                                                     ).data})
-
-
+# TG
 class BotTg(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.BotTgSerializer
@@ -40,14 +29,14 @@ class BotTg(generics.GenericAPIView):
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def get(self, request, *args, **kwargs):
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        user = self.get_user(kwargs['pk'])
         serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
                                                  many=True, context={"user": user, "language": user.language}
                                                  )
         return Response({"bot": serializer.data})
 
     def post(self, request, *args, **kwargs):
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        user = self.get_user(kwargs['pk'])
         if request.data.get("username") is None:
             request.data["username"] = kwargs['bot_username']
         serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user,
@@ -58,13 +47,11 @@ class BotTg(generics.GenericAPIView):
         except IntegrityError:
             return self.patch(request, *args, **kwargs)
         bot = serializer.data
-        # !!! only after test
-        # add_to_elastic_bot_data(bot)
         return Response({"bot": bot})
 
     def patch(self, request, *args, **kwargs):
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-        bot = get_object_or_404(self.queryset_bot, username=kwargs['bot_username'])
+        user = self.get_user(kwargs['pk'])
+        bot = self.get_bot(kwargs['bot_username'])
         if bot.user != user:
             return Response("bot's owner is not this user")
         if request.data.get("username") is None:
@@ -74,17 +61,14 @@ class BotTg(generics.GenericAPIView):
         serializer.update(bot, request.data)
         bot = self.queryset_bot.get(username=kwargs['bot_username'])
         return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request,
+
                                                                                       "language": user.language}).data})
 
+    def get_bot(self, bot_username):
+        return get_object_or_404(self.queryset_bot, username=bot_username)
 
-class UserList(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = serializers.UserTgSerializer
-    queryset_bot = models.UserTg.objects.filter(is_active=True)
-
-    def get(self, request, *args, **kwargs):
-        serializer = serializers.UserTgSerializer(self.queryset_bot, many=True, context={'request': request})
-        return Response({"users": serializer.data})
+    def get_user(self, user_id):
+        return get_object_or_404(self.queryset_user, user_id=user_id)
 
 
 class UserTg(generics.GenericAPIView):
@@ -116,6 +100,359 @@ class UserTg(generics.GenericAPIView):
         return Response({"user": serializer.data})
 
 
+class SearchAbstract(generics.GenericAPIView):
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def result_data(self, data):
+        tags = data["tags"]
+        try:
+            start = int(data["start"]) - 1
+            end = int(data["end"]) - 1
+        except KeyError:
+            start = 0
+            end = 4
+        ids, count = search_elastic(tags, start, end - start + 1)
+        res = list(self.queryset_bot.filter(id__in=ids))
+        sort(res, ids)
+        return res, count, tags, start, end
+
+
+class Search(SearchAbstract):
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        tags = request.data["tags"]
+        try:
+            start = int(request.data["start"]) - 1
+            end = int(request.data["end"]) - 1
+        except KeyError:
+            start = 0
+            end = 4
+        ids, count = search_elastic(tags, start, end - start + 1)
+        res = list(self.queryset_bot.filter(id__in=ids))
+        sort(res, ids)
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={'user': user, "language": user.language},
+                                                             many=True
+                                                             ).data, 'founded': count})
+
+
+class Top(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def post(self, request, *args, **kwargs):
+        months = 1
+        start = 0
+        end = 9
+        try:
+            months = int(request.data["months"])
+        except KeyError:
+            pass
+        try:
+            months = int(request.data["months"])
+            start = int(request.data["start"]) - 1
+            end = int(request.data["end"]) - 1
+        except KeyError:
+            pass
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        month_date = date.today() + relativedelta(months=-months)
+        ## by like
+        # bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
+        #                .values('bot_id').annotate(
+        #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
+        #                )
+
+        res, count = self.top_bots(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
+                                                                  bot__ready_to_use=True), start, end)
+
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={'user': user, "language": user.language},
+                                                             many=True
+                                                             ).data, 'founded': count})
+
+    def top_bots(self, bot_views, start, end):
+        bot_ids = list(bot_views.values('bot_id').annotate(
+            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+        count = len(bot_ids)
+        bot_ids = bot_ids[start:end]
+        res = list(self.queryset_bot.filter(id__in=bot_ids))
+        sort(res, bot_ids)
+        return res, count
+
+
+class Deal(generics.CreateAPIView):
+    serializer_class = serializers.DealSerializer
+    queryset = models.Deal.objects.filter()
+
+# IPHONE
+class SignUpView(generics.CreateAPIView):
+    serializer_class = serializers.UserSignUpSerializer
+    queryset = models.User.objects.filter()
+    permission_classes = [permissions.AllowAny]
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, token = serializer.save()
+        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
+                        status=status.HTTP_200_OK)
+
+
+# not used
+class SignInView(generics.CreateAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.SignInSerializer
+
+    def post(self, request, *args, **kwargs):
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user, token = serializer.save()
+        user = models.User.objects.get(pk=user.pk)
+        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
+                        status=status.HTTP_200_OK)
+
+
+class Tipidor(generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.SignInSerializer
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+
+        return Response({"answer": user.first_name + " ti pidor"}, status=status.HTTP_200_OK)
+
+
+class SearchIphone(SearchAbstract):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        res, count, tags, start, end = self.result_data(request.query_params)
+        models.IphoneSearch.objects.create(tags=tags, start=start, end=end, user=user, count=count)
+        # to test
+        # res = models.Bot.objects.all()
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={"language": user.language},
+                                                             many=True
+                                                             ).data, 'founded': count})
+
+
+class TopIphone(Top):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
+                                                   bot__is_deleted=False)
+
+    def get_queryset(self):
+        months = int(self.request.query_params.get('months', 1))
+        month_date = date.today() + relativedelta(months=-months)
+        queryset_view = self.queryset_view.filter(datetime__gte=month_date)
+        return queryset_view
+
+    def get(self, request, *args, **kwargs):
+        user = request.user
+        start = int(self.request.query_params.get('start', 1)) - 1
+        end = int(self.request.query_params.get('end', 10)) - 1
+        months = int(self.request.query_params.get('months', 1))
+        res, count = self.top_bots(self.get_queryset(), start, end)
+        models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
+        return Response({'bots': serializers.BotTgSerializer(res,
+                                                             context={'user': user, "language": user.language},
+                                                             many=True
+                                                             ).data, 'founded': count})
+
+
+class UserView(generics.ListAPIView, generics.UpdateAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.UserDataSerializer
+    queryset = models.User.objects.filter(deleted=False)
+
+    def update(self, request, *args, **kwargs):
+        serializer = self.serializer_class(request.user, data=request.data, partial=True)
+        serializer.is_valid(raise_exception=True)
+        serializer.save()
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIView, generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    serializer_class = serializers.BotsListSerializerIphone
+    queryset = models.Bot.objects.filter()
+
+    def get_queryset(self):
+        return self.queryset.filter()
+
+        user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
+        if user_tg is None:
+            raise ValidationError("Please, add tg user")
+        return self.queryset.filter(user=user_tg)
+
+    def get(self, request, *args, **kwargs):
+        try:
+            return self.retrieve(request, *args, **kwargs)
+        except AssertionError:
+            return self.list(request, *args, **kwargs)
+
+
+class CreateAddCodeForAddPhoneToTg(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        if self.queryset_user.filter(user_phone=user).exists():
+            raise ValidationError("your phone already add")
+        user_id = int(request.data["id"])
+        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
+        user_tg = self.queryset_user.filter(user_id=user_id).first()
+        if user_tg is None:
+            raise ValidationError("user_tg not exist")
+
+        code = generate_code()
+        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
+        # sent code
+        return Response({code})
+
+
+class UserTgAndIphone(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def check_user(self, user):
+        if self.queryset_user.filter(user_phone=user).exists():
+            raise ValidationError("your phone already add")
+
+
+class CreateCodeForAddPhoneToTg(UserTgAndIphone):
+
+    def post(self, request, *args, **kwargs):
+        user = request.user
+        self.check_user(user)
+        user_id = int(request.data["id"])
+        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
+        user_tg = self.queryset_user.filter(user_id=user_id).first()
+        if user_tg is None:
+            raise ValidationError("user_tg not exist")
+
+        code = generate_code()
+        try:
+            post_data = {
+                "user_id": user_tg.pk,
+                "text": "Code " + str(code)
+            }
+            requests.post(SUPPORT_USER_URL, json=post_data)
+            # response code 404
+        except Exception as e:
+            print("can not send  " + str(e))
+
+        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
+        # sent code
+        return Response({code})
+
+
+class PhoneToTg(UserTgAndIphone):
+    def post(self, request, *args, **kwargs):
+        code = request.data["code"]
+        user = request.user
+        verify_code = models.VerifyCode.objects.filter(is_active=True, code=code).first()
+        self.check_user(user)
+        user_tg = verify_code.user_tg
+        user_tg.user_phone.add(user)
+        stop_generate_code(verify_code)
+        return Response({"OK"})
+
+
+class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+    serializer_class = serializers.UserTgSerializer
+
+    def get_queryset(self):
+        return self.queryset.filter(user_phone=self.request.user)
+
+    def perform_destroy(self, instance):
+        instance.user_phone.remove(self.request.user)
+
+
+def generate_code():
+    unique_id = get_random_string(length=8)
+    if models.VerifyCode.objects.filter(is_active=True, code=unique_id).exists():
+        return generate_code()
+    return unique_id
+
+
+def stop_generate_code(verify_code):
+    verify_code.is_active = False
+    verify_code.save()
+
+
+# URLs
+class TgMe(generics.CreateAPIView):
+    def get(self, request, *args, **kwargs):
+        username = self.kwargs['bot_username']
+        pk_u = request.GET.get("u")
+        pk_i = request.GET.get("i")
+
+        executor = concurrent.futures.ThreadPoolExecutor(2)
+        executor.submit(save_views, username, pk_u, pk_i)
+        return redirect('https://t.me/%s' % username.replace('@', ''))
+
+
+def save_views(username, pk_u, pk_i):
+    bot = None
+    try:
+        bot = models.Bot.objects.get(username=username)
+    except Exception:
+        pass
+
+    if bot is None:
+        try:
+            bot = models.Bot.objects.get(username='@' + username)
+        except Exception:
+            pass
+    if bot is not None:
+        try:
+            if pk_u is not None:
+                user = models.UserTg.objects.get(pk=int(pk_u))
+                models.BotViews.objects.create(bot=bot, user=user)
+            elif pk_i is not None:
+                user = models.User.objects.get(pk=int(pk_u))
+                models.BotViews.objects.create(bot=bot, user_iphone=user)
+        except Exception:
+            models.BotViews.objects.create(bot=bot)
+            pass
+
+
+def sort(res, ids):
+    res.sort(key=lambda t: ids.index(t.id))
+
+
+
+# NOT NEEDED NOW
+class BotList(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.BotTgSerializer
+    queryset_bot = models.Bot.objects.filter(is_active=True)
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get(self, request, *args, **kwargs):
+        return Response({"bots": self.get_serializer(self.queryset_bot, many=True,
+                                                     ).data})
+
+
+class UserList(generics.GenericAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.UserTgSerializer
+    queryset_bot = models.UserTg.objects.filter(is_active=True)
+
+    def get(self, request, *args, **kwargs):
+        serializer = serializers.UserTgSerializer(self.queryset_bot, many=True, context={'request': request})
+        return Response({"users": serializer.data})
+
+
 class Likes(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.LikesSerializer
@@ -137,7 +474,6 @@ class LikeView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         user_tg = get_object_or_404(self.queryset_user, user_id=self.kwargs['pk'])
         bot = get_object_or_404(self.queryset_bot, username=self.kwargs['bot_username'])
-
         try:
             models.BotLike.objects.get(user=user_tg, bot=bot)
             return Response("Already like")
@@ -152,7 +488,6 @@ class LikeView(generics.CreateAPIView):
             like = models.BotLike.objects.get(user=user_tg, bot=bot)
             like.delete()
             return Response("delete")
-
         except models.BotLike.DoesNotExist:
             return Response("Bot not like")
 
@@ -257,45 +592,6 @@ class CommentView(LikeView):
             return Response("Comment not exist")
 
 
-class SearchAbstract(generics.GenericAPIView):
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def result_data(self, data):
-        tags = data["tags"]
-        try:
-            start = int(data["start"]) - 1
-            end = int(data["end"]) - 1
-        except KeyError:
-            start = 0
-            end = 4
-        ids, count = search_elastic(tags, start, end - start + 1)
-        res = list(self.queryset_bot.filter(id__in=ids))
-        sort(res, ids)
-        return res, count, tags, start, end
-
-
-class Search(SearchAbstract):
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        tags = request.data["tags"]
-        try:
-            start = int(request.data["start"]) - 1
-            end = int(request.data["end"]) - 1
-        except KeyError:
-            start = 0
-            end = 4
-        ids, count = search_elastic(tags, start, end - start + 1)
-        res = list(self.queryset_bot.filter(id__in=ids))
-        sort(res, ids)
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-        return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user, "language": user.language},
-                                                             many=True
-                                                             ).data, 'founded': count})
-
-
 # FOR TEST
 class UpdateElastic(generics.GenericAPIView):
     def get(self, request, *args, **kwargs):
@@ -313,294 +609,3 @@ class UpdateElastic(generics.GenericAPIView):
             except Exception:
                 pass
         return Response("Ok")
-
-
-class Top(generics.GenericAPIView):
-    permission_classes = [permissions.AllowAny]
-    queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def post(self, request, *args, **kwargs):
-        months = 1
-        start = 0
-        end = 9
-        try:
-            months = int(request.data["months"])
-        except KeyError:
-            pass
-        try:
-            months = int(request.data["months"])
-            start = int(request.data["start"]) - 1
-            end = int(request.data["end"]) - 1
-        except KeyError:
-            pass
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
-        month_date = date.today() + relativedelta(months=-months)
-        ## by like
-        # bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
-        #                .values('bot_id').annotate(
-        #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True)
-        #                )
-
-        res, count = self.top_bots(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
-                                                                  bot__ready_to_use=True), start, end)
-
-        return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user, "language": user.language},
-                                                             many=True
-                                                             ).data, 'founded': count})
-
-    def top_bots(self, bot_views, start, end):
-        bot_ids = list(bot_views.values('bot_id').annotate(
-            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
-        count = len(bot_ids)
-        bot_ids = bot_ids[start:end]
-        res = list(self.queryset_bot.filter(id__in=bot_ids))
-        sort(res, bot_ids)
-        return res, count
-
-
-class Deal(generics.CreateAPIView):
-    serializer_class = serializers.DealSerializer
-    queryset = models.Deal.objects.filter()
-
-
-class TgMe(generics.CreateAPIView):
-    def get(self, request, *args, **kwargs):
-        username = self.kwargs['bot_username']
-        pk_u = request.GET.get("u")
-        pk_i = request.GET.get("i")
-
-        executor = concurrent.futures.ThreadPoolExecutor(2)
-        executor.submit(save_views, username, pk_u, pk_i)
-        return redirect('https://t.me/%s' % username.replace('@', ''))
-
-
-def save_views(username, pk_u, pk_i):
-    bot = None
-    try:
-        bot = models.Bot.objects.get(username=username)
-    except Exception:
-        pass
-
-    if bot is None:
-        try:
-            bot = models.Bot.objects.get(username='@' + username)
-        except Exception:
-            pass
-    if bot is not None:
-        try:
-            if pk_u is not None:
-                user = models.UserTg.objects.get(pk=int(pk_u))
-                models.BotViews.objects.create(bot=bot, user=user)
-            elif pk_i is not None:
-                user = models.User.objects.get(pk=int(pk_u))
-                models.BotViews.objects.create(bot=bot, user_iphone=user)
-        except Exception:
-            models.BotViews.objects.create(bot=bot)
-            pass
-
-
-def sort(res, ids):
-    res.sort(key=lambda t: ids.index(t.id))
-
-
-# IPHONE
-
-
-class SignUpView(generics.CreateAPIView):
-    serializer_class = serializers.UserSignUpSerializer
-    queryset = models.User.objects.filter()
-    permission_classes = [permissions.AllowAny]
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user, token = serializer.save()
-        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
-                        status=status.HTTP_200_OK)
-
-
-# not used
-class SignInView(generics.CreateAPIView):
-    permission_classes = [permissions.AllowAny]
-    serializer_class = serializers.SignInSerializer
-
-    def post(self, request, *args, **kwargs):
-        serializer = self.get_serializer(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user, token = serializer.save()
-        user = models.User.objects.get(pk=user.pk)
-        return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
-                        status=status.HTTP_200_OK)
-
-
-class Tipidor(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.SignInSerializer
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-
-        return Response({"answer": user.first_name + " ti pidor"}, status=status.HTTP_200_OK)
-
-
-class SearchIphone(SearchAbstract):
-    permission_classes = [permissions.IsAuthenticated]
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        res, count, tags, start, end = self.result_data(request.query_params)
-        models.IphoneSearch.objects.create(tags=tags, start=start, end=end, user=user, count=count)
-        # to test
-        # res = models.Bot.objects.all()
-        return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={"language": user.language},
-                                                             many=True
-                                                             ).data, 'founded': count})
-
-
-class TopIphone(Top):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
-                                                   bot__is_deleted=False)
-
-    def get_queryset(self):
-        months = int(self.request.query_params.get('months', 1))
-        month_date = date.today() + relativedelta(months=-months)
-        queryset_view = self.queryset_view.filter(datetime__gte=month_date)
-        return queryset_view
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-        start = int(self.request.query_params.get('start', 1)) - 1
-        end = int(self.request.query_params.get('end', 10)) - 1
-        months = int(self.request.query_params.get('months', 1))
-        res, count = self.top_bots(self.get_queryset(), start, end)
-        models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
-        return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={'user': user, "language": user.language},
-                                                             many=True
-                                                             ).data, 'founded': count})
-
-
-class UserView(generics.ListAPIView, generics.UpdateAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.UserDataSerializer
-    queryset = models.User.objects.filter(deleted=False)
-
-    def update(self, request, *args, **kwargs):
-        serializer = self.serializer_class(request.user, data=request.data, partial=True)
-        serializer.is_valid(raise_exception=True)
-        serializer.save()
-        return Response(serializer.data, status=status.HTTP_200_OK)
-
-
-class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIView, generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.BotsListSerializerIphone
-    queryset = models.Bot.objects.filter()
-
-    def get_queryset(self):
-        user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
-        if user_tg is None:
-            raise ValidationError("Please, add tg user")
-        return self.queryset.filter(user=user_tg)
-
-    def get(self, request, *args, **kwargs):
-        try:
-            return self.retrieve(request, *args, **kwargs)
-        except AssertionError:
-            return self.list(request, *args, **kwargs)
-
-
-class CreateAddCodeForAddPhoneToTg(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        if self.queryset_user.filter(user_phone=user).exists():
-            raise ValidationError("your phone already add")
-        user_id = int(request.data["id"])
-        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
-        user_tg = self.queryset_user.filter(user_id=user_id).first()
-        if user_tg is None:
-            raise ValidationError("user_tg not exist")
-
-        code = generate_code()
-        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
-        # sent code
-        return Response({code})
-
-
-class UserTgAndIphone(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def check_user(self, user):
-        if self.queryset_user.filter(user_phone=user).exists():
-            raise ValidationError("your phone already add")
-
-
-class CreateCodeForAddPhoneToTg(UserTgAndIphone):
-
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        self.check_user(user)
-        user_id = int(request.data["id"])
-        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
-        user_tg = self.queryset_user.filter(user_id=user_id).first()
-        if user_tg is None:
-            raise ValidationError("user_tg not exist")
-
-        code = generate_code()
-        try:
-            post_data = {
-                "user_id": user_tg.pk,
-                "text": "Code " + str(code)
-            }
-            requests.post(SUPPORT_USER_URL, json=post_data)
-            # response code 404
-        except Exception as e:
-            print("can not send  " + str(e))
-
-        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
-        # sent code
-        return Response({code})
-
-
-class PhoneToTg(UserTgAndIphone):
-    def post(self, request, *args, **kwargs):
-        code = request.data["code"]
-        user = request.user
-        verify_code = models.VerifyCode.objects.filter(is_active=True, code=code).first()
-        self.check_user(user)
-        user_tg = verify_code.user_tg
-        user_tg.user_phone.add(user)
-        stop_generate_code(verify_code)
-        return Response({"OK"})
-
-
-class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-    serializer_class = serializers.UserTgSerializer
-
-    def get_queryset(self):
-        return self.queryset.filter(user_phone=self.request.user)
-
-    def perform_destroy(self, instance):
-        instance.user_phone.remove(self.request.user)
-
-
-def generate_code():
-    unique_id = get_random_string(length=8)
-    if models.VerifyCode.objects.filter(is_active=True, code=unique_id).exists():
-        return generate_code()
-    return unique_id
-
-
-def stop_generate_code(verify_code):
-    verify_code.is_active = False
-    verify_code.save()
