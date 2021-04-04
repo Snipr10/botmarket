@@ -236,7 +236,7 @@ class SearchIphone(SearchAbstract):
         # to test
         # res = models.Bot.objects.all()
         return Response({'bots': serializers.BotTgSerializer(res,
-                                                             context={"language": user.language},
+                                                             context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
@@ -417,7 +417,7 @@ def save_views(username, pk_u, pk_i):
                 user = models.UserTg.objects.get(pk=int(pk_u))
                 models.BotViews.objects.create(bot=bot, user=user)
             elif pk_i is not None:
-                user = models.User.objects.get(pk=int(pk_u))
+                user = models.User.objects.get(pk=int(pk_i))
                 models.BotViews.objects.create(bot=bot, user_iphone=user)
         except Exception:
             models.BotViews.objects.create(bot=bot)
