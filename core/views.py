@@ -419,6 +419,8 @@ def save_views(username, pk_u, pk_i):
             elif pk_i is not None:
                 user = models.User.objects.get(pk=int(pk_i))
                 models.BotViews.objects.create(bot=bot, user_iphone=user)
+            else:
+                models.BotViews.objects.create(bot=bot)
         except Exception:
             models.BotViews.objects.create(bot=bot)
             pass
