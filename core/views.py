@@ -22,12 +22,41 @@ from core.elastic.elastic import add_to_elastic, search_elastic, delete_from_ela
 
 
 # TG
-class BotTg(generics.GenericAPIView):
+
+class UserTgAbstract(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.BotTgSerializer
     queryset_bot = models.Bot.objects.filter()
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
+    def get_bot(self, bot_username):
+        return get_object_or_404(self.queryset_bot, username=bot_username)
+
+    def get_user(self, user_id):
+        return get_object_or_404(self.queryset_user, user_id=user_id)
+
+
+class ResetSubscribeIphoneView(generics.ListAPIView, generics.DestroyAPIView):
+    permission_classes = [permissions.AllowAny]
+    serializer_class = serializers.UserSignUpSerializer
+    queryset = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            raise ValidationError("can not get tg user")
+        serializer = self.get_serializer(instance.user_phone.all(), many=True)
+        return Response(serializer.data)
+
+    def delete(self, request, *args, **kwargs):
+        instance = self.get_object()
+        if instance is None:
+            raise ValidationError("can not get tg user")
+        instance.user_phone.all().delete()
+        return Response("Ok")
+
+
+class BotTg(UserTgAbstract):
     def get(self, request, *args, **kwargs):
         user = self.get_user(kwargs['pk'])
         serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
@@ -59,18 +88,14 @@ class BotTg(generics.GenericAPIView):
         serializer = self.get_serializer(data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.update(bot, request.data)
-        bot = self.queryset_bot.get(username=kwargs['bot_username'])
-        return Response({"bot": serializers.BotTgSerializer(bot, many=False, context={'request': request,
-
-                                                                                      "language": user.language}).data})
-
-    def get_bot(self, bot_username):
-        return get_object_or_404(self.queryset_bot, username=bot_username)
-
-    def get_user(self, user_id):
-        return get_object_or_404(self.queryset_user, user_id=user_id)
+        return Response({"bot": serializers.BotTgSerializer(self.get_bot(kwargs['bot_username']), many=False,
+                                                            context={
+                                                                'request': request,
+                                                                "language": user.language
+                                                            }).data})
 
 
+# CHANGE UserTgAbstract
 class UserTg(generics.GenericAPIView):
     permission_classes = [permissions.AllowAny]
     serializer_class = serializers.UserTgSerializer
@@ -187,6 +212,7 @@ class Top(generics.GenericAPIView):
 class Deal(generics.CreateAPIView):
     serializer_class = serializers.DealSerializer
     queryset = models.Deal.objects.filter()
+
 
 # IPHONE
 class SignUpView(generics.CreateAPIView):
@@ -428,7 +454,6 @@ def save_views(username, pk_u, pk_i):
 
 def sort(res, ids):
     res.sort(key=lambda t: ids.index(t.id))
-
 
 
 # NOT NEEDED NOW

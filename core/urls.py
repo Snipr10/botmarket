@@ -42,6 +42,9 @@ tg = [
     path("search/<int:pk>/", views.Search.as_view(), name="/"),
     path("top/<int:pk>/", views.Top.as_view(), name="/"),
     path("deal/", views.Deal.as_view(), name="/"),
+    path("<int:pk>/reset_subscribe/", views.ResetSubscribeIphoneView.as_view(), name="iphone-subscribe"),
+    # path("<int:pk>/reset_subscribe/<int:pk_user>", views.ResetSubscribeIphoneView.as_view(), name="reset-subscribe"),
+
     # path("<int:pk>/my_device/", views.MyDeviceView.as_view(), name="/"),
     # path("<int:pk>/my_device/<int:phone_id>/", views.MyDeviceView.as_view(), name="/"),
 ]
@@ -68,5 +71,5 @@ urlpatterns = [
     # iphone
     path("iphone/", include(iphone)),
     # tg
-    path("tg/", include(iphone)),
+    path("tg/", include(tg)),
 ]
