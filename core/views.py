@@ -351,7 +351,7 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
             if response.status_code != 200:
                 raise ParseError("We can't send the code, check what our bot can write to you")
         except Exception as e:
-            print("can not send  " + str(e))
+            raise ParseError("We can't send the code, please try again later")
 
         models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
         # sent code
