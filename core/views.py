@@ -9,7 +9,7 @@ from django.utils.crypto import get_random_string
 
 # Create your views here.
 from django.shortcuts import redirect
-from rest_framework.exceptions import ValidationError
+from rest_framework.exceptions import ValidationError, ParseError
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
@@ -321,26 +321,6 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
             return self.list(request, *args, **kwargs)
 
 
-class CreateAddCodeForAddPhoneToTg(generics.GenericAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
-
-    def post(self, request, *args, **kwargs):
-        user = request.user
-        if self.queryset_user.filter(user_phone=user).exists():
-            raise ValidationError("your phone already add")
-        user_id = int(request.data["id"])
-        # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
-        user_tg = self.queryset_user.filter(user_id=user_id).first()
-        if user_tg is None:
-            raise ValidationError("user_tg not exist")
-
-        code = generate_code()
-        models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
-        # sent code
-        return Response({code})
-
-
 class UserTgAndIphone(generics.GenericAPIView):
     permission_classes = [permissions.IsAuthenticated]
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
@@ -367,8 +347,9 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
                 "user_id": user_tg.pk,
                 "text": "Code " + str(code)
             }
-            requests.post(SUPPORT_USER_URL, json=post_data)
-            # response code 404
+            response = requests.post(SUPPORT_USER_URL, json=post_data)
+            if response.status_code != 200:
+                raise ParseError("We can't send the code, check what our bot can write to you")
         except Exception as e:
             print("can not send  " + str(e))
 
