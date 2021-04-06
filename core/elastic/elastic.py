@@ -55,6 +55,7 @@ def add_to_elastic(id, tags, text):
     except Exception as e:
         print(e)
 
+
 def search_elastic(keys, from_, size):
     ids = []
     count = 0
@@ -96,6 +97,7 @@ def create_search(keys):
     }
     }
 
+
 #
 # # es.index(index="lan", id=1, body={
 # #         'tags': ["vk"],
@@ -123,3 +125,11 @@ def create_search(keys):
 #         ],
 #     }
 # }
+
+a = es.search(index="ln", body={'query': {'bool': {'should': [{'match': {'tags': {'query': 'vk', 'fuzziness': 'AUTO'}}},
+                                   {'match': {'text': {'query': 'vk', 'fuzziness': 'AUTO'}}},
+{'match': {'text': {'query': 'vk', 'fuzziness': 'AUTO'}}}
+                                                              ],
+'must': [{
+    'match': {'language': {'query': 'en', 'fuzziness': 'AUTO'}}}
+                    ]} }}, from_=0, size=10)
