@@ -105,7 +105,7 @@ class BotsListSerializerIphone(BotsListSerializer):
         if user_tg is None:
             raise ValueError("please, add user Tg")
         username = validated_data["username"]
-        if models.Bot.objects.filter(username=username).exists():
+        if models.Bot.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError("Bot already exist")
         instance = super().create(validated_data)
         instance.user = user_tg
