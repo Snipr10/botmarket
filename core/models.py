@@ -41,10 +41,10 @@ class User(AbstractBaseUser):
     phone_id = models.CharField(max_length=150, null=True, blank=True, unique=True)
     first_name = models.CharField(max_length=150, null=True, blank=True)
     last_name = models.CharField(max_length=150, null=True, blank=True)
-    is_staff = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
+    is_staff = models.BooleanField(default=False, db_index=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     is_superuser = models.BooleanField(default=False)
-    deleted = models.BooleanField(default=False)
+    deleted = models.BooleanField(default=False, db_index=True)
     last_login = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     language = models.CharField(max_length=150, default="en")
     objects = UserManager()
@@ -58,10 +58,10 @@ class UserTg(models.Model):
     last_name = models.CharField(max_length=150, null=True, blank=True)
     username = models.CharField(max_length=150, null=True, blank=True)
     phone = models.CharField(max_length=150)
-    is_active = models.BooleanField(default=True)
-    is_ban = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-    language = models.CharField(max_length=150, default="ru")
+    is_active = models.BooleanField(default=True, db_index=True)
+    is_ban = models.BooleanField(default=False, db_index=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    language = models.CharField(max_length=150, default="ru", db_index=True)
     user_phone = models.ManyToManyField(User, blank=True)
 
     # def __str__(self):
@@ -83,11 +83,11 @@ class Bot(models.Model):
     last_name_ru = models.CharField(max_length=150, null=True, blank=True)
     phone = models.CharField(max_length=150, null=True, blank=True)
     is_user = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-    is_ban = models.BooleanField(default=False)
-    is_deleted = models.BooleanField(default=False)
-    is_reply = models.BooleanField(default=False)
-    ready_to_use = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True, db_index=True)
+    is_ban = models.BooleanField(default=False, db_index=True)
+    is_deleted = models.BooleanField(default=False, db_index=True)
+    is_reply = models.BooleanField(default=False, db_index=True)
+    ready_to_use = models.BooleanField(default=False, db_index=True)
     last_check = models.DateTimeField(null=True, blank=True)
     date_created = models.DateTimeField(auto_now_add=True)
     tags = models.CharField(max_length=4000)
@@ -98,7 +98,7 @@ class Bot(models.Model):
     all_warnings = models.IntegerField(default=0)
     # if bot active warnings = 0
     warnings = models.IntegerField(default=0)
-    is_founded = models.BooleanField(default=True)
+    is_founded = models.BooleanField(default=True, db_index=True)
     is_being_checked = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
@@ -175,7 +175,7 @@ class Deal(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
     message_id = models.IntegerField()
     description = models.CharField(max_length=4000)
-    is_active = models.BooleanField(default=True)
+    is_active = models.BooleanField(default=True, db_index=True)
     answer = models.CharField(max_length=4000, null=True, blank=True)
 
     def save(self, *args, **kwargs):
