@@ -16,7 +16,7 @@ from rest_framework import generics, permissions, status
 from botmarket.settings import SUPPORT_USER_URL
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
-from django.db.models import Avg, Count
+from django.db.models import Avg, Count, Q
 
 from core.elastic.elastic import add_to_elastic, search_elastic, delete_from_elastic
 
@@ -200,8 +200,17 @@ class Top(generics.GenericAPIView):
                                                              ).data, 'founded': count})
 
     def top_bots(self, bot_views, start, end):
-        bot_ids = list(bot_views.values('bot_id').annotate(
-            num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+        # bot_ids = list(bot_views.values('bot_id').annotate(
+        #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+        views_user = bot_views.filter(Q(user__isnull=False)).values("bot_id", "user_id").distinct()
+        views_phone = bot_views.filter(Q(user_iphone__isnull=False)).values("bot_id", "user_iphone_id").distinct()
+        res = {}
+        for i in list(views_phone) + list(views_user):
+            if res.get(i['bot_id']) is None:
+                res[i['bot_id']] = 1
+            else:
+                res[i['bot_id']] += 1
+        bot_ids = sorted(res, key=res.get, reverse=True)
         count = len(bot_ids)
         bot_ids = bot_ids[start:end]
         res = list(self.queryset_bot.filter(id__in=bot_ids))
@@ -269,8 +278,9 @@ class SearchIphone(SearchAbstract):
 
 class TopIphone(Top):
     permission_classes = [permissions.IsAuthenticated]
-    queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
-                                                   bot__is_deleted=False)
+    # queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
+    #                                                bot__is_deleted=False)
+    queryset_view = models.BotViews.objects.filter(Q(user__isnull=False) | Q(user_iphone__isnull=False))
 
     def get_queryset(self):
         months = int(self.request.query_params.get('months', 1))
