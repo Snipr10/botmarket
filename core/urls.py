@@ -72,4 +72,8 @@ urlpatterns = [
     path("iphone/", include(iphone)),
     # tg
     path("tg/", include(tg)),
+
+    #TEST
+    path("readytouse", views.ReadyToUse.as_view(), name="/"),
+
 ]

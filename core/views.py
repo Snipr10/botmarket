@@ -615,3 +615,16 @@ class UpdateElastic(generics.GenericAPIView):
             except Exception:
                 pass
         return Response("Ok")
+
+
+class ReadyToUse(generics.GenericAPIView):
+    def get(self, request, *args, **kwargs):
+        for bot in models.Bot.objects.filter():
+            bot.ready_to_use = True
+            bot.save()
+            try:
+                add_to_elastic(bot.id, bot.tags, "{ru} {en}".format(ru=bot.description_ru,
+                                                                    en=bot.description_en))
+            except Exception:
+                pass
+        return Response("Ok")
