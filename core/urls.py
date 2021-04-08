@@ -74,6 +74,6 @@ urlpatterns = [
     path("tg/", include(tg)),
 
     #TEST
-    path("readytouse", views.ReadyToUse.as_view(), name="/"),
+    path("readytouse/", views.ReadyToUse.as_view(), name="/"),
 
 ]
