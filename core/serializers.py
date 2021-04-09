@@ -1,4 +1,6 @@
 import datetime
+import re
+
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.authtoken.models import Token
 from rest_framework import serializers, status
@@ -52,6 +54,11 @@ class BotsListSerializer(serializers.ModelSerializer):
 
         return bot.save()
 
+    def bot_username_validation(self, username):
+        if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", username):
+            return username
+        raise serializers.ValidationError("Bad username")
+
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
@@ -63,6 +70,7 @@ class BotTgSerializer(BotsListSerializer):
     description = serializers.SerializerMethodField()
 
     def create(self, validated_data):
+        self.bot_username_validation(validated_data["username"])
         bot = models.Bot.objects.create(**validated_data)
         user = self.context.get("user")
         bot.user = user
@@ -103,8 +111,8 @@ class BotsListSerializerIphone(BotsListSerializer):
         user_iphone = self.context["request"].user
         user_tg = models.UserTg.objects.filter(user_phone=user_iphone).first()
         if user_tg is None:
-            raise ValueError("please, add user Tg")
-        username = validated_data["username"]
+            raise serializers.ValidationError("please, add user Tg")
+        username = self.bot_username_validation(validated_data["username"])
         if models.Bot.objects.filter(username=username).exists():
             raise serializers.ValidationError("Bot already exist")
         instance = super().create(validated_data)
