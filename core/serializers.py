@@ -1,4 +1,5 @@
 import datetime
+import json
 import re
 
 from rest_framework import exceptions, generics, permissions, status
@@ -21,7 +22,7 @@ class BotsListSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(max_length=150, required=False)
     is_user = serializers.BooleanField(default=False)
     is_active = serializers.BooleanField(default=True)
-    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
+    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True, default="[]")
     description_ru = serializers.CharField(max_length=4000, required=False)
     description_en = serializers.CharField(max_length=4000, required=False)
 
@@ -40,24 +41,56 @@ class BotsListSerializer(serializers.ModelSerializer):
             url = '%s?%s=%s' % (url, user_type, pk)
         return url
 
-    def update(self, bot, validated_data):
-        bot.first_name_en = validated_data.get("first_name_en", bot.first_name_en)
-        bot.first_name_ru = validated_data.get("first_name_ru", bot.first_name_ru)
-        bot.last_name_en = validated_data.get("last_name_en", bot.last_name_en)
-        bot.last_name_ru = validated_data.get("last_name_ru", bot.last_name_ru)
-        bot.phone = validated_data.get("phone", bot.phone)
-        bot.description_ru = validated_data.get("description_ru", bot.description_ru)
-        bot.description_en = validated_data.get("description_en", bot.description_en)
-        bot.tags = validated_data.get("tags", bot.tags)
-        bot.is_user = validated_data.get("is_user", bot.is_user)
-        bot.is_active = validated_data.get("is_active", bot.is_active)
-
-        return bot.save()
+    def update(self, instance, validated_data):
+        tags = json.loads(instance.tags)
+        instance.first_name_en = validated_data.get("first_name_en", instance.first_name_en)
+        self.update_tags(tags, instance.first_name_en, validated_data.get("first_name_en", None))
+        instance.first_name_ru = validated_data.get("first_name_ru", instance.first_name_ru)
+        self.update_tags(tags, instance.first_name_ru, validated_data.get("first_name_ru", None))
+        instance.last_name_en = validated_data.get("last_name_en", instance.last_name_en)
+        self.update_tags(tags, instance.last_name_en, validated_data.get("last_name_en", None))
+        instance.last_name_ru = validated_data.get("last_name_ru", instance.last_name_ru)
+        self.update_tags(tags, instance.last_name_ru, validated_data.get("last_name_ru", None))
+        instance.phone = validated_data.get("phone", instance.phone)
+        instance.description_ru = validated_data.get("description_ru", instance.description_ru)
+        instance.description_en = validated_data.get("description_en", instance.description_en)
+        instance.tags = validated_data.get("tags", instance.tags)
+        instance.is_user = validated_data.get("is_user", instance.is_user)
+        instance.is_active = validated_data.get("is_active", instance.is_active)
+        if instance.is_active and instance.is_deleted:
+            instance.is_deleted = False
+        if not instance.is_active:
+            delete_from_elastic(instance.id)
+        if instance.is_active:
+            add_to_elastic_bot_model(instance)
+        instance.tags = tags
+        instance.save()
+        return instance
 
     def bot_username_validation(self, username):
         if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", username):
             return username
         raise serializers.ValidationError("Bad username")
+
+    def update_tags(self, tags, new, old):
+        try:
+            tags.remove(old)
+        except ValueError:
+            pass
+        if new is not None and new != "":
+            tags.append(new)
+
+    def add_name_to_tags(self, bot, tags):
+        if bot.first_name_en is not None:
+            self.update_tags(tags, bot.first_name_en, bot.first_name_en)
+        if bot.first_name_en is not None:
+            self.update_tags(tags, bot.first_name_ru, bot.first_name_ru)
+        if bot.last_name_ru is not None:
+            self.update_tags(tags, bot.last_name_ru, bot.last_name_ru)
+        if bot.last_name_en is not None:
+            self.update_tags(tags, bot.last_name_en, bot.last_name_en)
+        bot.tags = tags
+        bot.save()
 
     class Meta:
         model = models.Bot
@@ -75,6 +108,7 @@ class BotTgSerializer(BotsListSerializer):
         user = self.context.get("user")
         bot.user = user
         bot.save()
+        self.add_name_to_tags(bot, json.loads(bot.tags))
         return bot
 
     def get_description(self, bot):
@@ -94,28 +128,16 @@ class BotTgSerializer(BotsListSerializer):
 
 
 class BotsListSerializerIphone(BotsListSerializer):
-    url = serializers.SerializerMethodField()
-    username = serializers.CharField(max_length=150, required=True)
-    first_name_en = serializers.CharField(max_length=150, required=False)
-    first_name_ru = serializers.CharField(max_length=150, required=False)
-    last_name_en = serializers.CharField(max_length=150, required=False)
-    last_name_ru = serializers.CharField(max_length=150, required=False)
-    phone = serializers.CharField(max_length=150, required=False)
-    is_user = serializers.BooleanField(default=False)
-    is_active = serializers.BooleanField(default=True)
-    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True)
-    description_ru = serializers.CharField(max_length=4000, required=False)
-    description_en = serializers.CharField(max_length=4000, required=False)
-
     def create(self, validated_data):
         user_iphone = self.context["request"].user
         user_tg = models.UserTg.objects.filter(user_phone=user_iphone).first()
-        if user_tg is None:
-            raise serializers.ValidationError("please, add user Tg")
+        # if user_tg is None:
+        #     raise serializers.ValidationError("please, add user Tg")
         username = self.bot_username_validation(validated_data["username"])
         if models.Bot.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError("Bot already exist")
         instance = super().create(validated_data)
+        self.add_name_to_tags(instance, json.loads(instance.tags))
         instance.user = user_tg
         instance.save()
         return instance
@@ -130,26 +152,6 @@ class BotsListSerializerIphone(BotsListSerializer):
         if pk is not None:
             url = '%s?u=%s' % (url, pk)
         return url
-
-    def update(self, instance, validated_data):
-        instance.first_name_en = validated_data.get("first_name_en", instance.first_name_en)
-        instance.first_name_ru = validated_data.get("first_name_ru", instance.first_name_ru)
-        instance.last_name_en = validated_data.get("last_name_en", instance.last_name_en)
-        instance.last_name_ru = validated_data.get("last_name_ru", instance.last_name_ru)
-        instance.phone = validated_data.get("phone", instance.phone)
-        instance.description_ru = validated_data.get("description_ru", instance.description_ru)
-        instance.description_en = validated_data.get("description_en", instance.description_en)
-        instance.tags = validated_data.get("tags", instance.tags)
-        instance.is_user = validated_data.get("is_user", instance.is_user)
-        instance.is_active = validated_data.get("is_active", instance.is_active)
-        if instance.is_active and instance.is_deleted:
-            instance.is_deleted = False
-        if not instance.is_active:
-            delete_from_elastic(instance.id)
-        if instance.is_active:
-            add_to_elastic_bot_model(instance)
-        instance.save()
-        return instance
 
     class Meta:
         model = models.Bot

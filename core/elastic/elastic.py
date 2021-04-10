@@ -25,20 +25,7 @@ def delete_from_elastic(id):
 
 
 def add_to_elastic_bot_model(bot):
-    tags = bot.tags
-    try:
-        if bot.last_name_en is not None:
-            tags += " " + bot.last_name_en
-        if bot.last_name_ru is not None:
-            tags += bot.last_name_ru
-        if bot.first_name_en is not None:
-            tags += bot.first_name_en
-        if bot.first_name_ru is not None:
-            tags += bot.first_name_ru
-    except Exception as e:
-        print(e)
-        pass
-    add_to_elastic(bot.id, tags,
+    add_to_elastic(bot.id, bot.tags,
                    "{ru} {en}".format(ru=bot.description_ru,
                                       en=bot.description_en))
 
