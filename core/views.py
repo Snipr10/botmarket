@@ -1,5 +1,7 @@
 import asyncio
 import concurrent.futures
+import json
+
 import requests
 
 from datetime import date
@@ -141,7 +143,11 @@ class SearchAbstract(generics.GenericAPIView):
         except KeyError:
             start = 0
             end = 4
-        ids, count = search_elastic(tags, start, end - start + 1)
+        try:
+            language = json.loads(data['language'])
+        except Exception:
+            language = ["en"]
+        ids, count = search_elastic(tags, start, end - start + 1, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
         return res, count, tags, start, end
@@ -158,7 +164,11 @@ class Search(SearchAbstract):
         except KeyError:
             start = 0
             end = 4
-        ids, count = search_elastic(tags, start, end - start + 1)
+        try:
+            language = json.loads(request.data['language'])
+        except Exception:
+            language = ["en"]
+        ids, count = search_elastic(tags, start, end - start + 1, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
