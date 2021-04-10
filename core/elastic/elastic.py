@@ -60,7 +60,7 @@ def add_to_elastic(id, tags, description_ru, description_en):
         print(e)
 
 
-def search_elastic(keys, from_, size, language=["en"]):
+def search_elastic(keys, from_, size, language=["en", "ru"]):
     ids = []
     count = 0
     try:

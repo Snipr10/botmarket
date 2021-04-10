@@ -146,7 +146,7 @@ class SearchAbstract(generics.GenericAPIView):
         try:
             language = json.loads(data['language'])
         except Exception:
-            language = ["en"]
+            language = ["en", "ru"]
         ids, count = search_elastic(tags, start, end - start + 1, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
@@ -167,7 +167,7 @@ class Search(SearchAbstract):
         try:
             language = json.loads(request.data['language'])
         except Exception:
-            language = ["en"]
+            language = ["en", "ru"]
         ids, count = search_elastic(tags, start, end - start + 1, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
