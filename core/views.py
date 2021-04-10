@@ -68,6 +68,10 @@ class BotTg(UserTgAbstract):
         user = self.get_user(kwargs['pk'])
         if request.data.get("username") is None:
             request.data["username"] = kwargs['bot_username']
+
+        if models.Bot.objects.filter(username__iexact=request.data["username"]).exists():
+            return Response("Bot already exist", status=status.HTTP_400_BAD_REQUEST)
+
         serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user,
                                                                                            "language": user.language})
         serializer.is_valid(raise_exception=True)
@@ -232,6 +236,7 @@ class SignUpView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        a, b = search_elastic("vk", 0, 12)
         user, token = serializer.save()
         return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
                         status=status.HTTP_200_OK)
