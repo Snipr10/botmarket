@@ -68,7 +68,11 @@ class BotsListSerializer(serializers.ModelSerializer):
         return instance
 
     def bot_username_validation(self, username):
-        if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", username):
+        if username.startswith("@"):
+            validate_name = username[1:]
+        else:
+            validate_name = username
+        if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", validate_name):
             return username
         raise serializers.ValidationError("Bad username")
 
@@ -131,8 +135,8 @@ class BotsListSerializerIphone(BotsListSerializer):
     def create(self, validated_data):
         user_iphone = self.context["request"].user
         user_tg = models.UserTg.objects.filter(user_phone=user_iphone).first()
-        # if user_tg is None:
-        #     raise serializers.ValidationError("please, add user Tg")
+        if user_tg is None:
+            raise serializers.ValidationError("please, add user Tg")
         username = self.bot_username_validation(validated_data["username"])
         if models.Bot.objects.filter(username__iexact=username).exists():
             raise serializers.ValidationError("Bot already exist")
