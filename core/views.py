@@ -246,7 +246,6 @@ class SignUpView(generics.CreateAPIView):
     def post(self, request, *args, **kwargs):
         serializer = self.get_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        a, b = search_elastic("vk", 0, 12)
         user, token = serializer.save()
         return Response({"user": serializers.UserSignUpSerializer(user).data, "token": token.key},
                         status=status.HTTP_200_OK)

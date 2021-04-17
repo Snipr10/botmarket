@@ -39,8 +39,8 @@ class UserManager(BaseUserManager):
             raise ValueError("Superuser must have is_superuser=True.")
         return self._create_user(phone_id, password, **extra_fields)
 
-#PermissionsMixin
-class User(AbstractBaseUser):
+
+class User(AbstractBaseUser, PermissionsMixin):
     phone_id = models.CharField(max_length=150, null=True, blank=True, unique=True)
     first_name = models.CharField(max_length=150, null=True, blank=True)
     last_name = models.CharField(max_length=150, null=True, blank=True)
