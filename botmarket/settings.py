@@ -188,3 +188,4 @@ DATABASES = {
         'PORT': '5675',
     }
 }
+ELASTIC_HOST = 'http://185.51.62.179'
