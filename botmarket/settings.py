@@ -176,7 +176,7 @@ SUPPORT_URL = 'http://127.0.0.1:8888/reply'
 SUPPORT_USER_URL = 'https://botslist-bot.herokuapp.com/message'
 
 BACKEND_URL = 'http://127.0.0.1:8000'
-ELASTIC_HOST = 'http://185.51.62.179'
+ELASTIC_HOST = ''
 
 DATABASES = {
     'default': {

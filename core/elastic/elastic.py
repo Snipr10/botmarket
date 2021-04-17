@@ -7,7 +7,7 @@ from elasticsearch import Elasticsearch, NotFoundError
 from botmarket.settings import ELASTIC_HOST
 
 es = Elasticsearch(hosts=ELASTIC_HOST)
-index = "bot-iphone-test"
+index = "bot-test"
 
 
 def get_body(tags, description_ru, description_en):
