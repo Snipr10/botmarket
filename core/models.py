@@ -1,5 +1,8 @@
+import enum
+
 import requests
 from django.contrib.auth.base_user import BaseUserManager, AbstractBaseUser
+from django.contrib.auth.models import PermissionsMixin
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 
@@ -37,7 +40,7 @@ class UserManager(BaseUserManager):
         return self._create_user(phone_id, password, **extra_fields)
 
 
-class User(AbstractBaseUser):
+class User(AbstractBaseUser, PermissionsMixin):
     phone_id = models.CharField(max_length=150, null=True, blank=True, unique=True)
     first_name = models.CharField(max_length=150, null=True, blank=True)
     last_name = models.CharField(max_length=150, null=True, blank=True)
@@ -258,3 +261,19 @@ class VerifyCode(models.Model):
     user_tg = models.ForeignKey(to=UserTg, on_delete=models.CASCADE, related_name="user_tg_code")
     code = models.CharField(max_length=8)
     is_active = models.BooleanField(default=True)
+
+
+class Ad(models.Model):
+    class Category(enum.Enum):
+        VIEW = 0
+        CLICK = 1
+    bot = models.ForeignKey(to=Bot, on_delete=models.CASCADE, related_name="bot")
+    is_active = models.BooleanField(default=True)
+    datetime = models.DateTimeField(auto_now_add=True)
+    bought = models.IntegerField(default=0)
+    spent = models.IntegerField(default=0)
+
+    category = models.IntegerField(
+        choices=[(choice.value, choice.name)
+                 for choice in Category])
+

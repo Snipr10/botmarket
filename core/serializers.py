@@ -26,7 +26,7 @@ class BotsListSerializer(serializers.ModelSerializer):
     description_ru = serializers.CharField(max_length=4000, required=False)
     description_en = serializers.CharField(max_length=4000, required=False)
 
-    def get_url(self, bot):
+    def generate_url(self, bot):
         pk = None
         user_type = "u"
         try:
@@ -40,6 +40,9 @@ class BotsListSerializer(serializers.ModelSerializer):
         if pk is not None:
             url = '%s?%s=%s' % (url, user_type, pk)
         return url
+
+    def get_url(self, bot):
+        return self.generate_url(bot)
 
     def update(self, instance, validated_data):
         tags = json.loads(instance.tags)
@@ -129,6 +132,16 @@ class BotTgSerializer(BotsListSerializer):
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
                   "phone", "is_user", "is_active", "description",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
+
+
+class BotTgAdSerializer(BotTgSerializer):
+    def get_url(self, bot):
+        url = self.generate_url(bot)
+        if "?" in url:
+            pattern ='%s&a=%s'
+        else:
+            pattern = '%s?a=%s'
+        return pattern % (url, self.context.get("ad"))
 
 
 class BotsListSerializerIphone(BotsListSerializer):

@@ -33,7 +33,9 @@ iphone = [
     path("generate_code/", views.CreateCodeForAddPhoneToTg.as_view(), name="code"),
     path("phone_and_tg/", views.PhoneToTg.as_view(), name="add phone to bot"),
     path("tg_account/", views.TgAccount.as_view(), name="PhoneToBot"),
-    path("tg_account/<int:pk>/", views.TgAccount.as_view(), name="PhoneToBot")
+    path("tg_account/<int:pk>/", views.TgAccount.as_view(), name="PhoneToBot"),
+    path("ad/", views.Ad.as_view(), name="ad"),
+
 ]
 
 tg = [

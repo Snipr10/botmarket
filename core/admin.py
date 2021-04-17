@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from core.models import Deal, UserTg, Bot, BotLike, BotRating, BotComment
+from core.models import Deal, UserTg, Bot, BotLike, BotRating, BotComment, Ad
 
 
 class DealAdmin(admin.ModelAdmin):
@@ -25,3 +25,5 @@ admin.site.register(Bot, BotAdmin)
 admin.site.register(BotLike)
 admin.site.register(BotRating)
 admin.site.register(BotComment)
+admin.site.register(Ad)
+

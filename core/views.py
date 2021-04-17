@@ -18,7 +18,7 @@ from rest_framework import generics, permissions, status
 from botmarket.settings import SUPPORT_USER_URL
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
-from django.db.models import Avg, Count, Q
+from django.db.models import Avg, Count, Q, F, FloatField, ExpressionWrapper
 
 from core.elastic.elastic import add_to_elastic, search_elastic, delete_from_elastic
 
@@ -407,6 +407,43 @@ class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
         instance.user_phone.remove(self.request.user)
 
 
+class Ad(generics.RetrieveAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+    queryset = models.Ad.objects.filter(is_active=True)
+
+    def get_object(self):
+        return self.queryset.annotate(stats_ad=ExpressionWrapper(
+            F('spent') / (1.0 * F('bought')), output_field=FloatField())).order_by('-stats_ad').first()
+
+    def get(self, request, *args, **kwargs):
+        ad = self.get_object()
+        user = request.user
+        while True:
+            if ad is None:
+                return Response("Ad not founded", status=404)
+            elif ad.bot.is_active:
+                if ad.category == 0:
+                    ad.spent += 1
+                    if ad.spent >= ad.bought:
+                        ad.is_active = False
+                    ad.save(update_fields=["is_active", "spent"])
+                    return Response(serializers.BotTgSerializer(ad.bot,
+                                                                context={'user': user,
+                                                                         "language": user.language},
+                                                                ).data)
+                else:
+                    return Response({'bot': serializers.BotTgAdSerializer(ad.bot,
+                                                                          context={'user': user,
+                                                                                   "language": user.language,
+                                                                                   "ad": ad.id},
+                                                                          ).data})
+
+            else:
+                ad.is_active = False
+                ad.save(update_fields=["is_active"])
+                ad = self.get_object()
+
+
 def generate_code():
     unique_id = get_random_string(length=8)
     if models.VerifyCode.objects.filter(is_active=True, code=unique_id).exists():
@@ -425,13 +462,14 @@ class TgMe(generics.CreateAPIView):
         username = self.kwargs['bot_username']
         pk_u = request.GET.get("u")
         pk_i = request.GET.get("i")
+        pk_a = request.GET.get("a")
 
         executor = concurrent.futures.ThreadPoolExecutor(2)
-        executor.submit(save_views, username, pk_u, pk_i)
+        executor.submit(save_views, username, pk_u, pk_i, pk_a)
         return redirect('https://t.me/%s' % username.replace('@', ''))
 
 
-def save_views(username, pk_u, pk_i):
+def save_views(username, pk_u, pk_i, pk_a):
     bot = None
     try:
         bot = models.Bot.objects.get(username=username)
@@ -455,6 +493,15 @@ def save_views(username, pk_u, pk_i):
                 models.BotViews.objects.create(bot=bot)
         except Exception:
             models.BotViews.objects.create(bot=bot)
+            pass
+        try:
+            if pk_a is not None:
+                ad = models.Ad.objects.get(id=int(pk_a))
+                ad.spent += 1
+                if ad.spent >= ad.bought:
+                    ad.is_active = False
+                ad.save(update_fields=["is_active", "spent"])
+        except Exception:
             pass
 
 
