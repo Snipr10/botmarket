@@ -33,7 +33,9 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 # Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/3.1/howto/deployment/checklist/
+# See https://docs.djangoproject.com/en/3.1/h
+#
+# owto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = '$*cjg1j!ox&c!ygn40a0^lp_qw#5hhhq_j%fr!6d&qp%_lvs_9'
@@ -42,7 +44,7 @@ SECRET_KEY = '$*cjg1j!ox&c!ygn40a0^lp_qw#5hhhq_j%fr!6d&qp%_lvs_9'
 
 # TODO env
 # if want env  DEBUG = os.getenv("DJANGO_DEBUG", False)
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ['*']
 
@@ -108,23 +110,7 @@ WSGI_APPLICATION = 'botmarket.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/3.1/ref/settings/#databases
 
-# DATABASES = {
-#     'default': {
-#         'ENGINE': 'django.db.backends.postgresql_psycopg2',
-#         'NAME': 'bbz406smsa7jzzgeiixc',
-#         'USER': 'ubdiczgpbehylbnxjud9',
-#         'PASSWORD': 'khkj3C9V2IMkom0Dmpkm',
-#         'HOST': 'bbz406smsa7jzzgeiixc-postgresql.services.clever-cloud.com',
-#         'PORT': '5675',
-#     }
-# }
-# now sqlite3
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'mydatabase1.db',
-    }
-}
+
 # TODO cache
 # if want cache
 # add decorator https://pypi.org/project/django-cache/
@@ -191,3 +177,14 @@ SUPPORT_USER_URL = 'https://botslist-bot.herokuapp.com/message'
 
 BACKEND_URL = 'http://127.0.0.1:8000'
 ELASTIC_HOST = 'http://185.51.62.179'
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'bbz406smsa7jzzgeiixc',
+        'USER': 'ubdiczgpbehylbnxjud9',
+        'PASSWORD': 'khkj3C9V2IMkom0Dmpkm',
+        'HOST': 'bbz406smsa7jzzgeiixc-postgresql.services.clever-cloud.com',
+        'PORT': '5675',
+    }
+}
