@@ -46,14 +46,14 @@ class ResetSubscribeIphoneView(generics.ListAPIView, generics.DestroyAPIView):
     def get(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance is None:
-            raise ValidationError("can not get tg user")
+            raise ValidationError({"message": "can not get tg user", "code": 4005})
         serializer = self.get_serializer(instance.user_phone.all(), many=True)
         return Response(serializer.data)
 
     def delete(self, request, *args, **kwargs):
         instance = self.get_object()
         if instance is None:
-            raise ValidationError("can not get tg user")
+            raise ValidationError({"message": "can not get tg user", "code": 4006})
         instance.user_phone.all().delete()
         return Response("Ok")
 
@@ -72,7 +72,7 @@ class BotTg(UserTgAbstract):
             request.data["username"] = kwargs['bot_username']
 
         if models.Bot.objects.filter(username__iexact=request.data["username"]).exists():
-            return Response("Bot already exist", status=status.HTTP_400_BAD_REQUEST)
+            return Response({"message": "Bot already exist", "code": 4007}, status=status.HTTP_400_BAD_REQUEST)
 
         serializer = serializers.BotTgSerializer(data=request.data, partial=True, context={"user": user,
                                                                                            "language": user.language})
@@ -88,7 +88,7 @@ class BotTg(UserTgAbstract):
         user = self.get_user(kwargs['pk'])
         bot = self.get_bot(kwargs['bot_username'])
         if bot.user != user:
-            return Response("bot's owner is not this user")
+            return Response({"message": "bot's owner is not this user", "code": 4014}, status=401)
         if request.data.get("username") is None:
             request.data["username"] = kwargs['bot_username']
         serializer = self.get_serializer(data=request.data, partial=True)
@@ -265,16 +265,6 @@ class SignInView(generics.CreateAPIView):
                         status=status.HTTP_200_OK)
 
 
-class Tipidor(generics.ListAPIView):
-    permission_classes = [permissions.IsAuthenticated]
-    serializer_class = serializers.SignInSerializer
-
-    def get(self, request, *args, **kwargs):
-        user = request.user
-
-        return Response({"answer": user.first_name + " ti pidor"}, status=status.HTTP_200_OK)
-
-
 class SearchIphone(SearchAbstract):
     permission_classes = [permissions.IsAuthenticated]
 
@@ -335,7 +325,7 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
     def get_queryset(self):
         user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
         if user_tg is None:
-            raise ValidationError("Please, add tg user")
+            raise ValidationError({"message": "Please, add tg user", "code": 4008})
         return self.queryset.filter(user=user_tg)
 
     def get(self, request, *args, **kwargs):
@@ -351,7 +341,7 @@ class UserTgAndIphone(generics.GenericAPIView):
 
     def check_user(self, user):
         if self.queryset_user.filter(user_phone=user).exists():
-            raise ValidationError("your phone already add")
+            raise ValidationError({"message": "your phone already add", "code": 4009})
 
 
 class CreateCodeForAddPhoneToTg(UserTgAndIphone):
@@ -363,7 +353,7 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
         # user_tg = self.queryset_user.get_object_or_404(user_id=user_id)
         user_tg = self.queryset_user.filter(user_id=user_id).first()
         if user_tg is None:
-            raise ValidationError("user_tg not exist")
+            raise ValidationError({"message": "user_tg not exist", "code": 40010})
 
         code = generate_code()
         try:
@@ -373,10 +363,12 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
             }
             response = requests.post(SUPPORT_USER_URL, json=post_data)
             if response.status_code != 200:
-                raise ParseError("We can't send the code, check what our bot can write to you")
-        except Exception as e:
-            raise ParseError("We can't send the code, please try again later")
+                raise ParseError({"message": "We can't send the code, check what our bot can write to you",
+                                  "code": 40011})
 
+        except Exception:
+            raise ParseError({"message": "We can't send the code, please try again later",
+                              "code": 40012})
         models.VerifyCode.objects.create(user_phone=user, user_tg=user_tg, code=code)
         # sent code
         return Response({code})
@@ -419,7 +411,7 @@ class Ad(generics.RetrieveAPIView):
         user = request.user
         while True:
             if ad is None:
-                return Response("Ad not founded", status=404)
+                return Response({"message": "Ad not founded", "code": 4041}, status=404)
             elif ad.bot.is_active:
                 if ad.category == 0:
                     ad.spent += 1

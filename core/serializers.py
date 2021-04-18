@@ -77,7 +77,7 @@ class BotsListSerializer(serializers.ModelSerializer):
             validate_name = username
         if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", validate_name):
             return username
-        raise serializers.ValidationError("Bad username")
+        raise serializers.ValidationError({"message": "Bad username", "code": 4003})
 
     def update_tags(self, tags, new, old):
         try:
@@ -149,10 +149,10 @@ class BotsListSerializerIphone(BotsListSerializer):
         user_iphone = self.context["request"].user
         user_tg = models.UserTg.objects.filter(user_phone=user_iphone).first()
         if user_tg is None:
-            raise serializers.ValidationError("please, add user Tg")
+            raise serializers.ValidationError({"message": "please, add user Tg", "code": 4001})
         username = self.bot_username_validation(validated_data["username"])
         if models.Bot.objects.filter(username__iexact=username).exists():
-            raise serializers.ValidationError("Bot already exist")
+            raise serializers.ValidationError({"message": "Bot already exist", "code": 4002})
         instance = super().create(validated_data)
         self.add_name_to_tags(instance, json.loads(instance.tags))
         instance.user = user_tg
@@ -257,8 +257,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
         try:
             user = models.User.objects.get(phone_id=phone_id)
             # if user.is_active:
-            #     raise serializers.ValidationError({"message": "User with this phone_id already exists"},
-            #                                       status.HTTP_400_BAD_REQUEST)
+            #     raise serializers.ValidationError({"message": "User with this phone_id already exists", "code": 4004})
         except models.User.DoesNotExist:
             user = models.User.objects.create_user(**validated_data)
         token, _ = Token.objects.get_or_create(user=user)
@@ -280,11 +279,11 @@ class SignInSerializer(serializers.Serializer):
         try:
             user = models.User.objects.get(phone_id=validated_data["phone_id"], deleted=False)
         except models.User.DoesNotExist:
-            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials."})
+            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials.", "code": 4011})
         if not user.check_password(self.validated_data["password"]) or user.deleted:
-            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials."})
+            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials.", "code": 4012})
         elif not user.is_active:
-            raise exceptions.AuthenticationFailed({"message": "User registration is not completed"})
+            raise exceptions.AuthenticationFailed({"message": "User registration is not completed", "code": 4013})
         user.last_login = datetime.datetime.utcnow()
         user.save()
         token, _ = Token.objects.get_or_create(user=user)
