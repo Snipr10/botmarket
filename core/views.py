@@ -136,7 +136,7 @@ class SearchAbstract(generics.GenericAPIView):
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
     def result_data(self, data):
-        tags = data["tags"]
+        tags = json.loads(data["tags"])
         try:
             start = int(data["start"]) - 1
             end = int(data["end"]) - 1

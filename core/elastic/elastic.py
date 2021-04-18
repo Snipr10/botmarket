@@ -94,8 +94,9 @@ def create_search(keys, language):
         })
     return {"query": {
         "bool": {
-            "should": should,
-            "must": [{'match': {'language': {'query': str(language)}}}
+            "must": [{'match': {'language': {'query': str(language)}}},
+                     {"bool": {"should":should}}
+
                      ]
         }
     }
@@ -138,10 +139,16 @@ def create_search(keys, language):
 #                                                    'must': [{
 #                                                        'match': {'language': {'query': 'en', 'fuzziness': 'AUTO'}}}
 #                                                    ]}}}, from_=0, size=10)
-#
-# es.search(index=index, body={'query': {'bool': {'should': [{'match': {'tags': {'query': 'бот', 'fuzziness': 'AUTO'}}},
-#                                                            {'match': {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}}
-#                                                            ],
-#                                                 'must': [{
-#                                                     'match': {'language': {'query': 'en', 'fuzziness': 'AUTO'}}}
-#                                                 ], }}}, from_=0, size=10)
+
+es.search(index=index, body={'query': {'bool': {'must': [{
+                    "match": {'language': {'query': 'en', 'fuzziness': 'AUTO'}}
+                },
+                {
+                    "bool": {
+                        "should": [
+                            {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}},
+                            {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}}
+                        ]
+                    }
+                }
+], }}}, from_=0, size=10)
