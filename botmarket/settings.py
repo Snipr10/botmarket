@@ -172,19 +172,5 @@ STATIC_URL = '/static/'
 
 # https://github.com/swagayolo/botlist_support_bot/blob/master/main.py
 # SUPPORT_URL = 'https://webhook.site/e2e9c1f0-70c0-4c18-af42-8b419dec7c27'
-SUPPORT_URL = 'http://127.0.0.1:8888/reply'
-SUPPORT_USER_URL = 'https://botslist-bot.herokuapp.com/message'
 
-BACKEND_URL = 'http://127.0.0.1:8000'
-ELASTIC_HOST = ''
-
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        'NAME': 'bbz406smsa7jzzgeiixc',
-        'USER': 'ubdiczgpbehylbnxjud9',
-        'PASSWORD': 'khkj3C9V2IMkom0Dmpkm',
-        'HOST': 'bbz406smsa7jzzgeiixc-postgresql.services.clever-cloud.com',
-        'PORT': '5675',
-    }
-}
+from .local_settings import *
