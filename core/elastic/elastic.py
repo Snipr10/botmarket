@@ -139,16 +139,16 @@ def create_search(keys, language):
 #                                                    'must': [{
 #                                                        'match': {'language': {'query': 'en', 'fuzziness': 'AUTO'}}}
 #                                                    ]}}}, from_=0, size=10)
-
-es.search(index=index, body={'query': {'bool': {'must': [{
-                    "match": {'language': {'query': 'en', 'fuzziness': 'AUTO'}}
-                },
-                {
-                    "bool": {
-                        "should": [
-                            {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}},
-                            {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}}
-                        ]
-                    }
-                }
-], }}}, from_=0, size=10)
+#
+# es.search(index=index, body={'query': {'bool': {'must': [{
+#                     "match": {'language': {'query': 'en', 'fuzziness': 'AUTO'}}
+#                 },
+#                 {
+#                     "bool": {
+#                         "should": [
+#                             {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}},
+#                             {"match": {'text': {'query': 'бот', 'fuzziness': 'AUTO'}}}
+#                         ]
+#                     }
+#                 }
+# ], }}}, from_=0, size=10)
