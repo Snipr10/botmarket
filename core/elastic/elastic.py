@@ -74,30 +74,26 @@ def search_elastic(keys, from_, size, language=["en", "ru"]):
 
 
 def create_search(keys, language):
-    should = []
+    must = []
     for key in keys:
-        should.append({
+        must.append({"bool": {"should": [{
             "match": {
                 "tags": {
                     "query": key,
                     "fuzziness": "AUTO"
                 }
-            }
-        })
-        should.append({
+            }}, {
             "match": {
                 "text": {
                     "query": key,
                     "fuzziness": "AUTO"
                 }
             }
-        })
+        }]}})
+        must.append({'match': {'language': {'query': str(language)}}})
     return {"query": {
         "bool": {
-            "must": [{'match': {'language': {'query': str(language)}}},
-                     {"bool": {"should":should}}
-
-                     ]
+            "must": must
         }
     }
     }
