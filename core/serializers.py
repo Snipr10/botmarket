@@ -15,16 +15,16 @@ from .models import BotLike, Deal
 class BotsListSerializer(serializers.ModelSerializer):
     url = serializers.SerializerMethodField()
     username = serializers.CharField(max_length=150, required=False)
-    first_name_en = serializers.CharField(max_length=150, required=False)
-    first_name_ru = serializers.CharField(max_length=150, required=False)
-    last_name_en = serializers.CharField(max_length=150, required=False)
-    last_name_ru = serializers.CharField(max_length=150, required=False)
+    first_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True, allow_null=True)
+    first_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True, allow_null=True)
+    last_name_en = serializers.CharField(max_length=150, required=False, allow_blank=True, allow_null=True)
+    last_name_ru = serializers.CharField(max_length=150, required=False, allow_blank=True, allow_null=True)
     phone = serializers.CharField(max_length=150, required=False)
     is_user = serializers.BooleanField(default=False)
     is_active = serializers.BooleanField(default=True)
     tags = serializers.CharField(max_length=4000, required=False, allow_blank=True, default="[]")
-    description_ru = serializers.CharField(max_length=4000, required=False)
-    description_en = serializers.CharField(max_length=4000, required=False)
+    description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
+    description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
 
     def generate_url(self, bot):
         pk = None
@@ -45,15 +45,18 @@ class BotsListSerializer(serializers.ModelSerializer):
         return self.generate_url(bot)
 
     def update(self, instance, validated_data):
-        tags = json.loads(instance.tags)
+        try:
+            tags = json.loads(instance.tags.replace("\'", '"'))
+        except Exception:
+            tags = None
         instance.first_name_en = validated_data.get("first_name_en", instance.first_name_en)
-        self.update_tags(tags, instance.first_name_en, validated_data.get("first_name_en", None))
+        self.update_tags(tags, instance.first_name_en, validated_data.get("first_name_en", instance.first_name_en))
         instance.first_name_ru = validated_data.get("first_name_ru", instance.first_name_ru)
-        self.update_tags(tags, instance.first_name_ru, validated_data.get("first_name_ru", None))
+        self.update_tags(tags, instance.first_name_ru, validated_data.get("first_name_ru", instance.first_name_ru))
         instance.last_name_en = validated_data.get("last_name_en", instance.last_name_en)
-        self.update_tags(tags, instance.last_name_en, validated_data.get("last_name_en", None))
+        self.update_tags(tags, instance.last_name_en, validated_data.get("last_name_en", instance.last_name_en))
         instance.last_name_ru = validated_data.get("last_name_ru", instance.last_name_ru)
-        self.update_tags(tags, instance.last_name_ru, validated_data.get("last_name_ru", None))
+        self.update_tags(tags, instance.last_name_ru, validated_data.get("last_name_ru", instance.last_name_ru))
         instance.phone = validated_data.get("phone", instance.phone)
         instance.description_ru = validated_data.get("description_ru", instance.description_ru)
         instance.description_en = validated_data.get("description_en", instance.description_en)
