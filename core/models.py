@@ -250,6 +250,7 @@ class IphoneRequest(models.Model):
 
 class IphoneSearch(IphoneRequest):
     tags = models.CharField(max_length=150)
+    date_search = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
 
 class IphoneTop(IphoneRequest):
