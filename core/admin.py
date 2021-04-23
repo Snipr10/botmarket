@@ -1,7 +1,7 @@
 from django.contrib import admin
 from django.contrib.auth.models import User
 
-from core.models import Deal, UserTg, Bot, BotLike, BotRating, BotComment, Ad, VerifyCode, IphoneTop, IphoneSearch, \
+from core.models import Deal, UserTg, Bot, BotLike, BotRating, BotComment, Ad, VerifyCode, IphoneTop, Search, \
     BotViews
 
 
@@ -27,7 +27,7 @@ admin.site.register(Bot, BotAdmin)
 admin.site.register(Ad)
 admin.site.register(VerifyCode)
 admin.site.register(IphoneTop)
-admin.site.register(IphoneSearch)
+admin.site.register(Search)
 admin.site.register(BotViews)
 admin.site.register(User)
 

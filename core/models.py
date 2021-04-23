@@ -242,13 +242,14 @@ class IphoneRequest(models.Model):
     start = models.IntegerField(default=0)
     end = models.IntegerField(default=4)
     count = models.IntegerField(default=0)
-    user = models.ForeignKey(to=User, on_delete=models.CASCADE)
+    user = models.ForeignKey(to=User, on_delete=models.CASCADE, null=True, blank=True)
 
     class Meta:
         abstract = True
 
 
-class IphoneSearch(IphoneRequest):
+class Search(IphoneRequest):
+    usertg = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
     tags = models.CharField(max_length=150)
     date_search = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 

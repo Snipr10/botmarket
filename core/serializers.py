@@ -298,13 +298,3 @@ class UserDataSerializer(serializers.ModelSerializer):
         model = models.User
         fields = ("first_name", "last_name", "phone_id", "language")
 
-
-class IphoneSearchSerializer(serializers.Serializer):
-    tags = serializers.CharField(max_length=150)
-    start = serializers.IntegerField(default=0)
-    end = serializers.IntegerField(default=4)
-    user = serializers.PrimaryKeyRelatedField(queryset=models.User.objects.all(), write_only=True)
-
-    class Meta:
-        model = models.IphoneSearch
-        fields = ("tags", "start", "end", "user")

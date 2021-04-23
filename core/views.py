@@ -156,7 +156,9 @@ class SearchAbstract(generics.GenericAPIView):
 class Search(SearchAbstract):
     permission_classes = [permissions.AllowAny]
 
+    # todo get
     def post(self, request, *args, **kwargs):
+        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
         tags = request.data["tags"]
         try:
             start = int(request.data["start"]) - 1
@@ -171,7 +173,7 @@ class Search(SearchAbstract):
         ids, count = search_elastic(tags, start, end - start + 1, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
-        user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+        models.Search.objects.create(tags=tags, start=start, end=end, usertg=user, count=count)
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'user': user, "language": user.language},
                                                              many=True
@@ -271,7 +273,7 @@ class SearchIphone(SearchAbstract):
     def get(self, request, *args, **kwargs):
         user = request.user
         res, count, tags, start, end = self.result_data(request.query_params)
-        models.IphoneSearch.objects.create(tags=tags, start=start, end=end, user=user, count=count)
+        models.Search.objects.create(tags=tags, start=start, end=end, user=user, count=count)
         # to test
         # res = models.Bot.objects.all()
         return Response({'bots': serializers.BotTgSerializer(res,
