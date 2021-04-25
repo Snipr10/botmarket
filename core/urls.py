@@ -39,6 +39,7 @@ iphone = [
 
 tg = [
     path("<int:pk>/bot_tg/<str:bot_username>/", views.BotTg.as_view(), name="/"),
+    path("<int:pk>/bot_tg/", views.BotTg.as_view(), name="/"),
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("search/<int:pk>/", views.Search.as_view(), name="/"),
     path("top/<int:pk>/", views.Top.as_view(), name="/"),
@@ -57,6 +58,8 @@ urlpatterns = [
     path("<int:pk>/rating/<str:bot_username>", views.RaitingView.as_view(), name="/"),
     path("<int:pk>/comment/<str:bot_username>", views.CommentView.as_view(), name="/"),
     path("<int:pk>/bot_tg/<str:bot_username>", views.BotTg.as_view(), name="/"),
+    path("<int:pk>/bot_tg/", views.BotTg.as_view(), name="/"),
+
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("bots_tg/", views.BotList.as_view(), name="/"),
 

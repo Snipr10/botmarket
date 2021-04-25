@@ -59,12 +59,23 @@ class ResetSubscribeIphoneView(generics.ListAPIView, generics.DestroyAPIView):
 
 
 class BotTg(UserTgAbstract):
+    start = 0
+    end = 100
+
     def get(self, request, *args, **kwargs):
         user = self.get_user(kwargs['pk'])
-        serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
-                                                 many=True, context={"user": user, "language": user.language}
-                                                 )
-        return Response({"bot": serializer.data})
+        try:
+            serializer = serializers.BotTgSerializer(self.queryset_bot.filter(username=kwargs['bot_username']),
+                                                     many=True, context={"user": user, "language": user.language}
+                                                     )
+            return Response({"bot": serializer.data})
+        except KeyError:
+            serializer = serializers.BotTgSerializer(self.queryset_bot.filter().order_by("username")[
+                                                     int(request.query_params.get("start", self.start)):int(
+                                                         request.query_params.get("end", self.end))],
+                                                     many=True, context={"user": user, "language": user.language}
+                                                     )
+            return Response({"bots": serializer.data})
 
     def post(self, request, *args, **kwargs):
         user = self.get_user(kwargs['pk'])
@@ -324,6 +335,9 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
     serializer_class = serializers.BotsListSerializerIphone
     queryset = models.Bot.objects.filter()
 
+    start = 0
+    end = 100
+
     def get_queryset(self):
         user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
         if user_tg is None:
@@ -335,6 +349,18 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIVi
             return self.retrieve(request, *args, **kwargs)
         except AssertionError:
             return self.list(request, *args, **kwargs)
+
+    def list(self, request, *args, **kwargs):
+        queryset = self.filter_queryset(self.get_queryset()).order_by('username')[
+                   int(request.query_params.get("start", self.start)):int(request.query_params.get("end", self.end))]
+
+        page = self.paginate_queryset(queryset)
+        if page is not None:
+            serializer = self.get_serializer(page, many=True)
+            return self.get_paginated_response(serializer.data)
+
+        serializer = self.get_serializer(queryset, many=True)
+        return Response(serializer.data)
 
 
 class UserTgAndIphone(generics.GenericAPIView):
