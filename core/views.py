@@ -330,35 +330,36 @@ class UserView(generics.ListAPIView, generics.UpdateAPIView):
         return Response(serializer.data, status=status.HTTP_200_OK)
 
 
-class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.ListAPIView, generics.RetrieveAPIView):
+class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.RetrieveAPIView):
     permission_classes = [permissions.IsAuthenticated]
     serializer_class = serializers.BotsListSerializerIphone
     queryset = models.Bot.objects.filter()
 
-    start = 0
-    end = 100
-
-    def get_queryset(self):
+    def get_user_tg(self):
         user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
         if user_tg is None:
             raise ValidationError({"message": "Please, add tg user", "code": 4008})
-        return self.queryset.filter(user=user_tg)
+        return user_tg
+
+    def get_queryset(self):
+        return self.queryset.filter(user=self.get_user_tg())
 
     def get(self, request, *args, **kwargs):
-        try:
-            return self.retrieve(request, *args, **kwargs)
-        except AssertionError:
-            return self.list(request, *args, **kwargs)
+        return self.retrieve(request, *args, **kwargs)
+
+
+class BotsView(BotView, generics.ListAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    start = 0
+    end = 100
+
+    def get(self, request, *args, **kwargs):
+        return self.list(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.filter_queryset(self.get_queryset()).order_by('username')[
+        queryset = self.get_queryset().filter(user=self.get_user_tg()).order_by('username')[
                    int(request.query_params.get("start", self.start)):int(request.query_params.get("end", self.end))]
-
-        page = self.paginate_queryset(queryset)
-        if page is not None:
-            serializer = self.get_serializer(page, many=True)
-            return self.get_paginated_response(serializer.data)
-
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
 
