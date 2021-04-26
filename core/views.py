@@ -149,8 +149,8 @@ class SearchAbstract(generics.GenericAPIView):
     def result_data(self, data):
         tags = json.loads(data["tags"])
         try:
-            start = int(data["start"]) - 1
-            end = int(data["end"]) - 1
+            start = int(data["start"])
+            end = int(data["end"])
         except KeyError:
             start = 0
             end = 4
