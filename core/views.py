@@ -199,15 +199,15 @@ class Top(generics.GenericAPIView):
     def post(self, request, *args, **kwargs):
         months = 1
         start = 0
-        end = 9
+        end = 10
         try:
             months = int(request.data["months"])
         except KeyError:
             pass
         try:
             months = int(request.data["months"])
-            start = int(request.data["start"]) - 1
-            end = int(request.data["end"]) - 1
+            start = int(request.data["start"])
+            end = int(request.data["end"])
         except KeyError:
             pass
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
@@ -307,8 +307,8 @@ class TopIphone(Top):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        start = int(self.request.query_params.get('start', 1)) - 1
-        end = int(self.request.query_params.get('end', 10)) - 1
+        start = int(self.request.query_params.get('start', 0))
+        end = int(self.request.query_params.get('end', 10))
         months = int(self.request.query_params.get('months', 1))
         res, count = self.top_bots(self.get_queryset(), start, end)
         models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
