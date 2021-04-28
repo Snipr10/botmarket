@@ -200,6 +200,11 @@ class Top(generics.GenericAPIView):
         months = 1
         start = 0
         end = 10
+        language = ["en", "ru"]
+        try:
+            language = json.loads(request.query_params.get("language"))
+        except Exception:
+            pass
         try:
             months = int(request.data["months"])
         except KeyError:
@@ -219,16 +224,20 @@ class Top(generics.GenericAPIView):
         #                )
 
         res, count = self.top_bots(models.BotViews.objects.filter(datetime__gte=month_date, bot__is_active=True,
-                                                                  bot__ready_to_use=True), start, end)
+                                                                  bot__ready_to_use=True), start, end, language)
 
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'user': user, "language": user.language},
                                                              many=True
                                                              ).data, 'founded': count})
 
-    def top_bots(self, bot_views, start, end):
+    def top_bots(self, bot_views, start, end, language):
         # bot_ids = list(bot_views.values('bot_id').annotate(
         #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
+        if 'ru' in language and 'en' not in language:
+            bot_views = bot_views.filter(Q(bot__description_ru__isnull=False) | ~Q(bot__description_ru=''))
+        elif 'en' in language and 'ru' not in language:
+            bot_views = bot_views.filter(Q(bot__description_en__isnull=False) | ~Q(bot__description_en=''))
         views_user = bot_views.filter(Q(user__isnull=False)).values("bot_id", "user_id").distinct()
         views_phone = bot_views.filter(Q(user_iphone__isnull=False)).values("bot_id", "user_iphone_id").distinct()
         res = {}
@@ -310,7 +319,12 @@ class TopIphone(Top):
         start = int(self.request.query_params.get('start', 0))
         end = int(self.request.query_params.get('end', 10))
         months = int(self.request.query_params.get('months', 1))
-        res, count = self.top_bots(self.get_queryset(), start, end)
+        language = ["en", "ru"]
+        try:
+            language = json.loads(request.query_params.get("language"))
+        except Exception:
+            pass
+        res, count = self.top_bots(self.get_queryset(), start, end, language)
         models.IphoneTop.objects.create(months=months, start=start, end=end, user=user, count=count)
         return Response({'bots': serializers.BotTgSerializer(res,
                                                              context={'user': user, "language": user.language},
