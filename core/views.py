@@ -1,6 +1,7 @@
 import asyncio
 import concurrent.futures
 import json
+from abc import abstractmethod
 
 import requests
 
@@ -216,6 +217,7 @@ class Top(generics.GenericAPIView):
         except KeyError:
             pass
         user = get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+
         month_date = date.today() + relativedelta(months=-months)
         ## by like
         # bot_ids = list(BotLike.objects.filter(datetime__gte=month_date, bot__is_active=True, bot__ready_to_use=True)
@@ -441,17 +443,20 @@ class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
         instance.user_phone.remove(self.request.user)
 
 
-class Ad(generics.RetrieveAPIView):
-    permission_classes = [permissions.IsAuthenticated]
+class AdAbstract(generics.RetrieveAPIView):
     queryset = models.Ad.objects.filter(is_active=True)
 
     def get_object(self):
         return self.queryset.annotate(stats_ad=ExpressionWrapper(
             F('spent') / (1.0 * F('bought')), output_field=FloatField())).order_by('-stats_ad').first()
 
+    @abstractmethod
+    def get_user(self, request, kwargs):
+        ...
+
     def get(self, request, *args, **kwargs):
         ad = self.get_object()
-        user = request.user
+        user = self.get_user(request, kwargs)
         while True:
             if ad is None:
                 return Response({"message": "Ad not founded", "code": 4041}, status=404)
@@ -476,6 +481,20 @@ class Ad(generics.RetrieveAPIView):
                 ad.is_active = False
                 ad.save(update_fields=["is_active"])
                 ad = self.get_object()
+
+
+class Ad(AdAbstract):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def get_user(self, request, kwargs):
+        return request.user
+
+
+class AdTg(AdAbstract):
+    queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
+
+    def get_user(self, request, kwargs):
+        return get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
 
 
 def generate_code():

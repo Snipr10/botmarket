@@ -43,6 +43,8 @@ tg = [
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("search/<int:pk>/", views.Search.as_view(), name="/"),
     path("top/<int:pk>/", views.Top.as_view(), name="/"),
+    path("ad/<int:pk>/", views.AdTg.as_view(), name="/"),
+
     path("deal/", views.Deal.as_view(), name="/"),
     path("<int:pk>/reset_subscribe/", views.ResetSubscribeIphoneView.as_view(), name="iphone-subscribe"),
     # path("<int:pk>/reset_subscribe/<int:pk_user>", views.ResetSubscribeIphoneView.as_view(), name="reset-subscribe"),
@@ -59,6 +61,7 @@ urlpatterns = [
     path("<int:pk>/comment/<str:bot_username>", views.CommentView.as_view(), name="/"),
     path("<int:pk>/bot_tg/<str:bot_username>", views.BotTg.as_view(), name="/"),
     path("<int:pk>/bot_tg/", views.BotTg.as_view(), name="/"),
+    path("ad/<int:pk>/", views.AdTg.as_view(), name="/"),
 
     path("<int:pk>/user_tg/", views.UserTg.as_view(), name="/"),
     path("bots_tg/", views.BotList.as_view(), name="/"),
