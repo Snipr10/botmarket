@@ -99,6 +99,7 @@ class BotsListSerializer(serializers.ModelSerializer):
             self.update_tags(tags, bot.last_name_ru, bot.last_name_ru)
         if bot.last_name_en is not None:
             self.update_tags(tags, bot.last_name_en, bot.last_name_en)
+        self.update_tags(tags, bot.username.replace("@", ""), bot.username.replace("@", ""))
         bot.tags = tags
         bot.save()
 
