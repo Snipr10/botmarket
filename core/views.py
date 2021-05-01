@@ -1,6 +1,8 @@
 import asyncio
 import concurrent.futures
 import json
+import random
+import secrets
 from abc import abstractmethod
 
 import requests
@@ -19,7 +21,7 @@ from rest_framework import generics, permissions, status
 from botmarket.settings import SUPPORT_USER_URL
 from core import models, serializers
 from rest_framework.generics import get_object_or_404
-from django.db.models import Avg, Count, Q, F, FloatField, ExpressionWrapper
+from django.db.models import Avg, Count, Q, F, FloatField, ExpressionWrapper, IntegerField
 
 from core.elastic.elastic import add_to_elastic, search_elastic, delete_from_elastic
 
@@ -443,12 +445,29 @@ class TgAccount(generics.DestroyAPIView, generics.ListAPIView):
         instance.user_phone.remove(self.request.user)
 
 
+from django.db.models import Func
+
+
+class DiffDays(Func):
+    function = 'DATE_PART'
+    template = "%(function)s('day', %(expressions)s)"
+
+
+class CastDate(Func):
+    function = 'date_trunc'
+    template = "%(function)s('day', %(expressions)s)"
+
+
 class AdAbstract(generics.RetrieveAPIView):
     queryset = models.Ad.objects.filter(is_active=True)
 
     def get_object(self):
-        return self.queryset.annotate(stats_ad=ExpressionWrapper(
-            F('spent') / (1.0 * F('bought')), output_field=FloatField())).order_by('stats_ad').first()
+        return self.queryset.annotate(days=ExpressionWrapper(DiffDays(
+            CastDate(secrets.choice([date.today(), F('datetime')]) - F('datetime'))) + 1,
+                                                             output_field=IntegerField())).annotate(
+            stats_ad=ExpressionWrapper(
+                F('spent') / (1.0 * F('bought')) - F('days') / 30.0, output_field=FloatField())).order_by(
+            'stats_ad').first()
 
     @abstractmethod
     def get_user(self, request, kwargs):
