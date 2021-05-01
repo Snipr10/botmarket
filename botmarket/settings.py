@@ -9,7 +9,7 @@ https://docs.djangoproject.com/en/3.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/3.1/ref/settings/
 """
-
+import os
 from pathlib import Path
 from dotenv import load_dotenv
 
@@ -54,6 +54,8 @@ CORS_ORIGIN_ALLOW_ALL = True
 
 INSTALLED_APPS = [
     'corsheaders',
+    # 'core.apps.CoreAdminConfig',
+
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -78,7 +80,6 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = 'botmarket.urls'
-
 
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': [
@@ -170,7 +171,10 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
+STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+
 # https://github.com/swagayolo/botlist_support_bot/blob/master/main.py
 # SUPPORT_URL = 'https://webhook.site/e2e9c1f0-70c0-4c18-af42-8b419dec7c27'
+
 
 from .local_settings import *

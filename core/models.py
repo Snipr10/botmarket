@@ -54,6 +54,9 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     USERNAME_FIELD = "phone_id"
 
+    class Meta:
+        verbose_name_plural = "User Iphone"
+
 
 class UserTg(models.Model):
     user_id = models.IntegerField(primary_key=True)
@@ -174,6 +177,9 @@ class BotViews(models.Model):
     datetime = models.DateTimeField(auto_now_add=True)
     user_iphone = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
+    def __str__(self):
+        return '%s  %s' % (self.pk, self.bot)
+
 
 class Deal(models.Model):
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE)
@@ -254,6 +260,9 @@ class Search(IphoneRequest):
     tags = models.CharField(max_length=150)
     date_search = models.DateTimeField(auto_now_add=True, null=True, blank=True)
 
+    def __str__(self):
+        return str(self.tags)
+
 
 class IphoneTop(IphoneRequest):
     months = models.IntegerField(default=1)
@@ -280,3 +289,6 @@ class Ad(models.Model):
     category = models.IntegerField(
         choices=[(choice.value, choice.name)
                  for choice in Category])
+
+    def __str__(self):
+        return str(self.bot)

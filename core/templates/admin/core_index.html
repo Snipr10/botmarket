@@ -1,0 +1,21 @@
+{% extends "admin/index.html" %}
+{% load i18n %}
+
+{% block content %}
+    <div style="float: left; width: 100%">
+        {% for section_name, section in extra_pages.items %}
+            <div class="module">
+                <table>
+                    <caption>{{ section_name }}</caption>
+                    {% for page_name, link in section.items %}
+                    <tr>
+                        <th scope="row"><a href="{{ link }}">{{ page_name }}</a> </th>
+                        <td>&nbsp;</td>
+                    </tr>
+                    {% endfor %}
+                </table>
+            </div>
+        {% endfor %}
+        {{ block.super }}
+    </div>
+{% endblock %}
