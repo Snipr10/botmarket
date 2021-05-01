@@ -103,6 +103,7 @@ class Bot(models.Model):
     warnings = models.IntegerField(default=0)
     is_founded = models.BooleanField(default=True, db_index=True)
     is_being_checked = models.BooleanField(default=False)
+    add_by_user = models.BooleanField(default=True)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):
@@ -269,6 +270,7 @@ class Ad(models.Model):
     class Category(enum.Enum):
         VIEW = 0
         CLICK = 1
+
     bot = models.ForeignKey(to=Bot, on_delete=models.CASCADE, related_name="bot")
     is_active = models.BooleanField(default=True)
     datetime = models.DateTimeField(auto_now_add=True)
@@ -278,4 +280,3 @@ class Ad(models.Model):
     category = models.IntegerField(
         choices=[(choice.value, choice.name)
                  for choice in Category])
-

@@ -448,7 +448,7 @@ class AdAbstract(generics.RetrieveAPIView):
 
     def get_object(self):
         return self.queryset.annotate(stats_ad=ExpressionWrapper(
-            F('spent') / (1.0 * F('bought')), output_field=FloatField())).order_by('-stats_ad').first()
+            F('spent') / (1.0 * F('bought')), output_field=FloatField())).order_by('stats_ad').first()
 
     @abstractmethod
     def get_user(self, request, kwargs):
