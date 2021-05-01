@@ -485,12 +485,12 @@ class AdAbstract(generics.RetrieveAPIView):
                     if ad.spent >= ad.bought:
                         ad.is_active = False
                     ad.save(update_fields=["is_active", "spent"])
-                    return Response(serializers.BotTgSerializer(ad.bot,
-                                                                context={'user': user,
-                                                                         "language": user.language},
-                                                                ).data)
+                    return Response({"bot": serializers.BotTgSerializer(ad.bot,
+                                                                        context={"user": user,
+                                                                                 "language": user.language},
+                                                                        ).data})
                 else:
-                    return Response({'bot': serializers.BotTgAdSerializer(ad.bot,
+                    return Response({"bot": serializers.BotTgAdSerializer(ad.bot,
                                                                           context={'user': user,
                                                                                    "language": user.language,
                                                                                    "ad": ad.id},
