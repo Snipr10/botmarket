@@ -1,22 +1,29 @@
 from core import models
 
 from .forms import DataDisplayForm
-from django.views import View
 from django.shortcuts import render
+from django.views import View
 
 
 class StatisticsView(View):
     """ Statistic of new users """
-    template_name = 'admin/statistics.html'
+    template_name = 'admin/static_info.html'
 
     def get(self, request):
         """Api get"""
 
         data_fields = {
-            'Users phone': (models.User.objects.all().count()),
-            'Users tg': (models.UserTg.objects.all().count()),
-            'Bots all': (models.Bot.objects.all().count()),
-            'Bots ready to use': (models.Bot.objects.filter(ready_to_use=True).count()),
+            'User Iphone': (models.User.objects.all()
+                            .count()),
+            'User tg': (models.UserTg.objects
+                        .all()
+                        .count()),
+
+            'Bot': (
+                models.Bot.objects.all().count()),
+            'Bot ready to use': (
+                models.Bot.objects.filter(ready_to_use=True).count()),
+
         }
         context = {
             'title': 'Statistics',
@@ -24,4 +31,3 @@ class StatisticsView(View):
         }
 
         return render(request, self.template_name, context)
-    
