@@ -78,7 +78,7 @@ class BotsListSerializer(serializers.ModelSerializer):
             validate_name = username[1:]
         else:
             validate_name = username
-        if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)?$", validate_name):
+        if re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*$", validate_name):
             return username
         raise serializers.ValidationError({"message": "Bad username", "code": 4003})
 

@@ -80,7 +80,7 @@ urlpatterns = [
     # tg
     path("tg/", include(tg)),
 
-    #TEST
+    # TEST
     path("readytouse/", views.ReadyToUse.as_view(), name="/"),
 
 ]
