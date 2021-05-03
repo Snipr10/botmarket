@@ -72,9 +72,17 @@ class BotTg(UserTgAbstract):
                                                      )
             return Response({"bot": serializer.data})
         except KeyError:
-            serializer = serializers.BotTgSerializer(self.queryset_bot.filter().order_by("username")[
-                                                     int(request.query_params.get("start", self.start)):int(
-                                                         request.query_params.get("end", self.end))],
+            # serializer = serializers.BotTgSerializer(self.queryset_bot.filter().order_by("username")[
+            #                                          int(request.query_params.get("start", self.start)):int(
+            #                                              request.query_params.get("end", self.end))],
+            #                                          many=True, context={"user": user, "language": user.language}
+            #                                          )
+            # last 100
+            last_bot = self.queryset_bot.all().order_by("-date_created").values('pk')[
+                       int(request.query_params.get("start", self.start)):int(
+                           request.query_params.get("end", self.end))]
+
+            serializer = serializers.BotTgSerializer(self.queryset_bot.filter(pk__in=last_bot).order_by("username"),
                                                      many=True, context={"user": user, "language": user.language}
                                                      )
             return Response({"bots": serializer.data})
@@ -761,13 +769,17 @@ class UpdateElastic(generics.GenericAPIView):
 
 
 class ReadyToUse(generics.GenericAPIView):
+
     def get(self, request, *args, **kwargs):
-        for bot in models.Bot.objects.filter():
-            bot.ready_to_use = True
-            bot.save()
-            try:
-                add_to_elastic(bot.id, bot.tags, "{ru} {en}".format(ru=bot.description_ru,
-                                                                    en=bot.description_en))
-            except Exception:
-                pass
+        validate_name = "usaway_world_dates_bot"
+        import re
+        re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*$", validate_name)
+        # for bot in models.Bot.objects.filter():
+        #     bot.ready_to_use = True
+        #     bot.save()
+        #     try:
+        #         add_to_elastic(bot.id, bot.tags, "{ru} {en}".format(ru=bot.description_ru,
+        #                                                             en=bot.description_en))
+        #     except Exception:
+        #         pass
         return Response("Ok")
