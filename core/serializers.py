@@ -25,6 +25,19 @@ class BotsListSerializer(serializers.ModelSerializer):
     tags = serializers.CharField(max_length=4000, required=False, allow_blank=True, default="[]")
     description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
     description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
+    status = serializers.SerializerMethodField()
+
+    def get_status(self, bot):
+        if not bot.is_founded:
+            return {"code": 1, "message": "not founded"}
+        if not bot.ready_to_use:
+            return {"code": 2, "message": "bot is not working"}
+        if bot.ready_to_use:
+            if bot.last_check is None:
+                return {"code": 3, "message": "bot is not checked"}
+            else:
+                return {"code": 4, "message": "bot is working"}
+        return None
 
     def generate_url(self, bot):
         pk = None
@@ -106,7 +119,7 @@ class BotsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active",
+                  "phone", "is_user", "is_active", "status",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
@@ -134,7 +147,7 @@ class BotTgSerializer(BotsListSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "description",
+                  "phone", "is_user", "is_active", "description", "status",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
@@ -177,7 +190,7 @@ class BotsListSerializerIphone(BotsListSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active",
+                  "phone", "is_user", "is_active", "status",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
