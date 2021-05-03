@@ -37,7 +37,7 @@ class BotsListSerializer(serializers.ModelSerializer):
                 return {"code": 3, "message": "bot is not checked"}
             else:
                 return {"code": 4, "message": "bot is working"}
-        return None
+        return {"code": 1, "message": "not founded"}
 
     def generate_url(self, bot):
         pk = None
