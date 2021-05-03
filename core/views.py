@@ -1,7 +1,6 @@
 import asyncio
 import concurrent.futures
 import json
-import random
 import secrets
 from abc import abstractmethod
 
@@ -239,9 +238,9 @@ class Top(generics.GenericAPIView):
         # bot_ids = list(bot_views.values('bot_id').annotate(
         #     num=Count('bot_id')).order_by('-num').values_list('bot_id', flat=True))
         if 'ru' in language and 'en' not in language:
-            bot_views = bot_views.filter(Q(bot__description_ru__isnull=False) | ~Q(bot__description_ru=''))
+            bot_views = bot_views.filter(Q(bot__description_ru__isnull=False) & ~Q(bot__description_ru=''))
         elif 'en' in language and 'ru' not in language:
-            bot_views = bot_views.filter(Q(bot__description_en__isnull=False) | ~Q(bot__description_en=''))
+            bot_views = bot_views.filter(Q(bot__description_en__isnull=False) & ~Q(bot__description_en=''))
         views_user = bot_views.filter(Q(user__isnull=False)).values("bot_id", "user_id").distinct()
         views_phone = bot_views.filter(Q(user_iphone__isnull=False)).values("bot_id", "user_iphone_id").distinct()
         res = {}
