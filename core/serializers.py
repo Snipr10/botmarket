@@ -30,13 +30,13 @@ class BotsListSerializer(serializers.ModelSerializer):
     def get_status(self, bot):
         if not bot.is_founded:
             return {"code": 1, "message": "not founded"}
-        if not bot.ready_to_use:
-            return {"code": 2, "message": "bot is not working"}
         if bot.ready_to_use:
+            return {"code": 2, "message": "bot is working"}
+        if not bot.ready_to_use:
             if bot.last_check is None:
                 return {"code": 3, "message": "bot is not checked"}
             else:
-                return {"code": 4, "message": "bot is working"}
+                return {"code": 4, "message": "bot is not working"}
         return {"code": 1, "message": "not founded"}
 
     def generate_url(self, bot):
