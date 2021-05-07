@@ -60,7 +60,7 @@ def add_to_elastic(id, tags, description_ru, description_en):
         print(e)
 
 
-def search_elastic(keys, from_, size, language=["en", "ru"]):
+def search_elastic(keys, from_, size, language=["en", "ru"], attempt=0):
     ids = []
     count = 0
     try:
@@ -69,7 +69,8 @@ def search_elastic(keys, from_, size, language=["en", "ru"]):
             ids.append(int(r['_id']))
         count = res['hits']['total']['value']
     except Exception:
-        pass
+        if attempt == 0:
+            return search_elastic(keys, from_, size, language, 1)
     return ids, count
 
 
