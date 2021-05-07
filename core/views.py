@@ -413,7 +413,7 @@ class CreateCodeForAddPhoneToTg(UserTgAndIphone):
         try:
             post_data = {
                 "user_id": user_tg.pk,
-                "text": "Code " + str(code)
+                "text": "Code <code>%s</code>" % code
             }
             response = requests.post(SUPPORT_USER_URL, json=post_data)
             if response.status_code != 200:
