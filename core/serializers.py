@@ -1,6 +1,7 @@
 import datetime
 import json
 import re
+from json import JSONDecodeError
 
 from rest_framework import exceptions, generics, permissions, status
 from rest_framework.authtoken.models import Token
@@ -22,7 +23,7 @@ class BotsListSerializer(serializers.ModelSerializer):
     phone = serializers.CharField(max_length=150, required=False)
     is_user = serializers.BooleanField(default=False)
     is_active = serializers.BooleanField(default=True)
-    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True, default="[]")
+    tags = serializers.CharField(max_length=4000, required=False, allow_blank=True, default='[]')
     description_ru = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
     description_en = serializers.CharField(max_length=4000, required=False, allow_blank=True, allow_null=True)
     status = serializers.SerializerMethodField()
@@ -132,7 +133,11 @@ class BotTgSerializer(BotsListSerializer):
         user = self.context.get("user")
         bot.user = user
         bot.save()
-        self.add_name_to_tags(bot, json.loads(bot.tags))
+        try:
+            self.add_name_to_tags(bot, json.loads(bot.tags))
+        except JSONDecodeError:
+            self.add_name_to_tags(bot, [])
+
         return bot
 
     def get_description(self, bot):
