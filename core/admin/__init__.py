@@ -35,6 +35,10 @@ class AdAdmin(admin.ModelAdmin):
     autocomplete_fields = ['bot']
 
 
+class BotViewsAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['bot']
+
+
 site.register(Deal, DealAdmin)
 site.register(UserTg, UserTgAdmin)
 site.register(Bot, BotAdmin)
@@ -42,4 +46,4 @@ site.register(User, UserIPhoneAdmin)
 site.register(Ad, AdAdmin)
 site.register(VerifyCode)
 site.register(Search)
-site.register(BotViews)
+site.register(BotViews, BotViewsAdmin)
