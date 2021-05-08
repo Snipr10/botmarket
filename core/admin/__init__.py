@@ -28,13 +28,18 @@ class UserIPhoneAdmin(admin.ModelAdmin):
 
 class BotAdmin(admin.ModelAdmin):
     list_display = ('username', 'first_name_en', 'first_name_ru', 'last_name_en', 'last_name_ru')
+    search_fields = ['username']
+
+
+class AdAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['bot']
 
 
 site.register(Deal, DealAdmin)
 site.register(UserTg, UserTgAdmin)
 site.register(Bot, BotAdmin)
 site.register(User, UserIPhoneAdmin)
-site.register(Ad)
+site.register(Ad, AdAdmin)
 site.register(VerifyCode)
 site.register(Search)
 site.register(BotViews)

@@ -279,7 +279,6 @@ class Ad(models.Model):
     class Category(enum.Enum):
         VIEW = 0
         CLICK = 1
-
     bot = models.ForeignKey(to=Bot, on_delete=models.CASCADE, related_name="bot")
     is_active = models.BooleanField(default=True)
     datetime = models.DateTimeField(auto_now_add=True)
