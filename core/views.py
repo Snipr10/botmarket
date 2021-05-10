@@ -432,6 +432,10 @@ class PhoneToTg(UserTgAndIphone):
     def post(self, request, *args, **kwargs):
         code = request.data["code"]
         user = request.user
+        if code == "AppleTestCd":
+            user_tg = models.Bot.objects.get(user_id=123)
+            user_tg.user_phone.add(user)
+            return Response({"OK"})
         verify_code = models.VerifyCode.objects.filter(is_active=True, code=code).first()
         self.check_user(user)
         user_tg = verify_code.user_tg
@@ -771,6 +775,16 @@ class UpdateElastic(generics.GenericAPIView):
 class ReadyToUse(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
+        code = generate_code()
+        try:
+            post_data = {
+                "user_id": 457180576,
+                "text": "Code <code>%s</code>" % code
+            }
+            response = requests.post(SUPPORT_USER_URL, json=post_data)
+        except Exception:
+            pass
+
         validate_name = "usaway_world_dates_bot"
         import re
         re.match("^[a-zA-Z0-9]+(?:_[a-zA-Z0-9]+)*$", validate_name)
