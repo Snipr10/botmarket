@@ -433,7 +433,7 @@ class PhoneToTg(UserTgAndIphone):
         code = request.data["code"]
         user = request.user
         if code == "AppleTestCd":
-            user_tg = models.Bot.objects.get(user_id=123)
+            user_tg = models.UserTg.objects.get(user_id=1472296121)
             user_tg.user_phone.add(user)
             return Response({"OK"})
         verify_code = models.VerifyCode.objects.filter(is_active=True, code=code).first()
