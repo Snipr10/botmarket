@@ -287,7 +287,7 @@ class UserSignUpSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = models.User
-        fields = ("id", "first_name", "last_name", "phone_id", "language")
+        fields = ("id", "first_name", "last_name", "phone_id", "language", "notification")
 
 
 class SignInSerializer(serializers.Serializer):
@@ -315,5 +315,5 @@ class SignInSerializer(serializers.Serializer):
 class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
-        fields = ("first_name", "last_name", "phone_id", "language")
+        fields = ("first_name", "last_name", "phone_id", "language", "notification", "registration_id")
 
