@@ -43,3 +43,4 @@ setuptools~=45.2.0
 simplejson~=3.16.0
 Markdown~=3.1.1
 Pygments~=2.3.1
+gobiko.apns~=0.1.6

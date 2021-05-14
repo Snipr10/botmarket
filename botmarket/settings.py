@@ -174,6 +174,13 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'static')
 ROOT_PATH = os.path.dirname(__file__)
 STATICFILES_DIRS = [os.path.join(BASE_DIR, 'base_static')]
 
+
+APNS_KEY_ID = None
+APNS_AUTH_KEY = None
+TEAM_ID = None
+BUNDLE_ID = None
+
+
 # https://github.com/swagayolo/botlist_support_bot/blob/master/main.py
 # SUPPORT_URL = 'https://webhook.site/e2e9c1f0-70c0-4c18-af42-8b419dec7c27'
 
