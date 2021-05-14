@@ -10,4 +10,3 @@ CLIENT_ISO_PUSH = APNsClient(
     auth_key_filepath=APNS_AUTH_KEY
 )
 
-# CLIENT_ISO_PUSH.send_message('f0c328b3a8dc8cc8e9c5a4b023d5ccd361f151217f420aaf3f92fc44fcf63a4d', 'скучаю')
