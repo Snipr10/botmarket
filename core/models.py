@@ -122,7 +122,8 @@ class Bot(models.Model):
                 print(e)
                 raise Exception(e)
         try:
-            if self.user != Bot.objects.get(id=self.pk).user:
+            if self.user is not None and Bot.objects.get(id=self.pk).user is not None \
+                    and self.user != Bot.objects.get(id=self.pk).user:
                 send_push_on_all_device(self.user, self.username)
         except Exception:
             pass
