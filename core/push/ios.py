@@ -35,3 +35,6 @@ def send_push(registration_id, text):
         CLIENT_ISO_PUSH.send_message(registration_id, text)
     except BadDeviceToken:
         pass
+    except Exception:
+        # stange token
+        pass
