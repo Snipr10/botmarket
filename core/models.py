@@ -11,6 +11,8 @@ from botmarket.settings import SUPPORT_URL, SUPPORT_USER_URL
 from core.elastic.elastic import delete_from_elastic
 from rest_framework.authtoken.models import Token
 
+from core.push.ios import send_push_on_all_device
+
 
 class UserManager(BaseUserManager):
     use_in_migrations = True
@@ -110,6 +112,7 @@ class Bot(models.Model):
     is_founded = models.BooleanField(default=True, db_index=True)
     is_being_checked = models.BooleanField(default=False)
     add_by_user = models.BooleanField(default=True)
+    is_top = models.BooleanField(default=False)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):
@@ -118,6 +121,11 @@ class Bot(models.Model):
             except Exception as e:
                 print(e)
                 raise Exception(e)
+        try:
+            if self.user != Bot.objects.get(id=self.pk).user:
+                send_push_on_all_device(self.user, self.username)
+        except Exception:
+            pass
         super().save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
