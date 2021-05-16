@@ -53,7 +53,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     last_login = models.DateTimeField(auto_now_add=True, null=True, blank=True)
     language = models.CharField(max_length=150, default="en")
     notification = models.BooleanField(null=True, blank=True)
-    registration_id = models.CharField(max_length=150, blank=True)
+    registration_id = models.CharField(max_length=150, blank=True, null=True)
 
     objects = UserManager()
 
