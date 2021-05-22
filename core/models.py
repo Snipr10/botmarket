@@ -106,6 +106,7 @@ class Bot(models.Model):
     description_ru = models.CharField(max_length=4000, null=True, blank=True)
     description_en = models.CharField(max_length=4000, null=True, blank=True)
     user = models.ForeignKey(UserTg, on_delete=models.CASCADE, null=True, blank=True)
+    user_iphone = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True)
     all_warnings = models.IntegerField(default=0)
     # if bot active warnings = 0
     warnings = models.IntegerField(default=0)
@@ -113,6 +114,7 @@ class Bot(models.Model):
     is_being_checked = models.BooleanField(default=False)
     add_by_user = models.BooleanField(default=True)
     is_top = models.BooleanField(default=False)
+    is_for_display_iphone = models.BooleanField(default=True, db_index=True)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):

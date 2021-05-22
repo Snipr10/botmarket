@@ -362,12 +362,15 @@ class BotView(generics.CreateAPIView, generics.UpdateAPIView, generics.RetrieveA
 
     def get_user_tg(self):
         user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
-        if user_tg is None:
-            raise ValidationError({"message": "Please, add tg user", "code": 4008})
+        # if user_tg is None:
+        #     raise ValidationError({"message": "Please, add tg user", "code": 4008})
         return user_tg
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.get_user_tg())
+        user_tg = self.get_user_tg()
+        if user_tg is None:
+            return self.queryset.filter(user_iphone=self.request.user)
+        return self.queryset.filter(Q(user=self.get_user_tg()) | Q(user_iphone=self.request.user))
 
     def get(self, request, *args, **kwargs):
         return self.retrieve(request, *args, **kwargs)
@@ -383,7 +386,7 @@ class BotsView(BotView, generics.ListAPIView):
         return self.list(request, *args, **kwargs)
 
     def list(self, request, *args, **kwargs):
-        queryset = self.get_queryset().filter(user=self.get_user_tg()).order_by('username')[
+        queryset = self.get_queryset().order_by('username')[
                    int(request.query_params.get("start", self.start)):int(request.query_params.get("end", self.end))]
         serializer = self.get_serializer(queryset, many=True)
         return Response(serializer.data)
@@ -775,6 +778,14 @@ class UpdateElastic(generics.GenericAPIView):
 class ReadyToUse(generics.GenericAPIView):
 
     def get(self, request, *args, **kwargs):
+
+        from core.push.ios import CLIENT_ISO_PUSH
+        # from gobiko.apns.payload import PayloadAlert, Payload
+
+        CLIENT_ISO_PUSH.send_message('f0c328b3a8dc8cc8e9c5a4b023d5ccd361f151217f420aaf3f92fc44fcf63a4d', 'тест',
+                                     loc_key='This is a %@',
+           loc_args=['Test'])
+
         code = generate_code()
         try:
             post_data = {
