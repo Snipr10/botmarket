@@ -33,6 +33,7 @@ iphone = [
     path("phone_and_tg/", views.PhoneToTg.as_view(), name="add phone to bot"),
     path("tg_account/", views.TgAccount.as_view(), name="PhoneToBot"),
     path("tg_account/<int:pk>/", views.TgAccount.as_view(), name="PhoneToBot"),
+    path("add_bots_to_tg/", views.AddBotsToTg.as_view(), name="bots from iphone to tg"),
     path("ad/", views.Ad.as_view(), name="ad"),
 
 ]

@@ -13,7 +13,7 @@ from django.utils.crypto import get_random_string
 
 # Create your views here.
 from django.shortcuts import redirect
-from rest_framework.exceptions import ValidationError, ParseError
+from rest_framework.exceptions import ValidationError, ParseError, MethodNotAllowed
 from rest_framework.response import Response
 from rest_framework import generics, permissions, status
 
@@ -530,6 +530,20 @@ class AdTg(AdAbstract):
 
     def get_user(self, request, kwargs):
         return get_object_or_404(self.queryset_user, user_id=kwargs['pk'])
+
+
+class AddBotsToTg(generics.GenericAPIView):
+    permission_classes = [permissions.IsAuthenticated]
+
+    def post(self, request, *args, **kwargs):
+        user_tg = models.UserTg.objects.filter(user_phone=self.request.user).first()
+        if user_tg is None:
+            raise ValidationError({"message": "Please, add tg user", "code": 4008})
+        try:
+            models.Bot.objects.filter(user=None, user_iphone=self.request.user).update(user=user_tg, user_iphone=None)
+            return Response("OK")
+        except Exception:
+            raise ParseError({"message": "Try again later", "code": 40013})
 
 
 def generate_code():

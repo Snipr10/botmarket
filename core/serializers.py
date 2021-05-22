@@ -177,8 +177,10 @@ class BotsListSerializerIphone(BotsListSerializer):
             raise serializers.ValidationError({"message": "Bot already exist", "code": 4002})
         instance = super().create(validated_data)
         self.add_name_to_tags(instance, json.loads(instance.tags))
-        instance.user = user_tg
-        instance.user_iphone = user_iphone
+        if user_tg is None:
+            instance.user_iphone = user_iphone
+        else:
+            instance.user = user_tg
         instance.save()
         return instance
 
