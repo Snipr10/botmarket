@@ -120,8 +120,8 @@ class BotsListSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "status",
-                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
+                  "phone", "is_user", "is_active", "status", "is_for_display_iphone",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url",)
 
 
 class BotTgSerializer(BotsListSerializer):
@@ -196,7 +196,7 @@ class BotsListSerializerIphone(BotsListSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "status",
+                  "phone", "is_user", "is_active", "status", "is_for_display_iphone",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 

@@ -317,7 +317,8 @@ class TopIphone(Top):
     permission_classes = [permissions.IsAuthenticated]
     # queryset_view = models.BotViews.objects.filter(bot__is_active=True, bot__ready_to_use=True, bot__is_ban=False,
     #                                                bot__is_deleted=False)
-    queryset_view = models.BotViews.objects.filter(Q(user__isnull=False) | Q(user_iphone__isnull=False))
+    queryset_view = models.BotViews.objects.filter(Q(user__isnull=False) | Q(user_iphone__isnull=False),
+                                                   bot__is_for_display_iphone=True)
 
     def get_queryset(self):
         months = int(self.request.query_params.get('months', 1))
@@ -518,6 +519,7 @@ class AdAbstract(generics.RetrieveAPIView):
 
 class Ad(AdAbstract):
     permission_classes = [permissions.IsAuthenticated]
+    queryset = models.Ad.objects.filter(is_active=True, bot__is_for_display_iphone=True)
 
     def get_user(self, request, kwargs):
         return request.user

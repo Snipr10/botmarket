@@ -11,7 +11,7 @@ from botmarket.settings import SUPPORT_URL, SUPPORT_USER_URL
 from core.elastic.elastic import delete_from_elastic
 from rest_framework.authtoken.models import Token
 
-from core.push.ios import send_push_on_all_device
+from core.push.ios import send_push_on_all_device, send_push_on_all_device_tg
 
 
 class UserManager(BaseUserManager):
@@ -124,9 +124,12 @@ class Bot(models.Model):
                 print(e)
                 raise Exception(e)
         try:
-            if self.user is not None and Bot.objects.get(id=self.pk).user is not None \
-                    and self.user != Bot.objects.get(id=self.pk).user:
-                send_push_on_all_device(self.user, self.username)
+            if self.user is not None:
+                bot_before_update = Bot.objects.get(id=self.pk)
+                if bot_before_update.user is not None and self.user != bot_before_update.user:
+                    send_push_on_all_device_tg(self.user, self.username)
+                elif bot_before_update.user_iphone is not None and self.user_iphone != bot_before_update.user_iphone:
+                    send_push_on_all_device(self.user, self.username)
         except Exception:
             pass
         super().save(*args, **kwargs)
@@ -293,6 +296,7 @@ class Ad(models.Model):
     class Category(enum.Enum):
         VIEW = 0
         CLICK = 1
+
     bot = models.ForeignKey(to=Bot, on_delete=models.CASCADE, related_name="bot")
     is_active = models.BooleanField(default=True)
     datetime = models.DateTimeField(auto_now_add=True)
