@@ -186,8 +186,8 @@ class BotTgSerializer(BotsListSerializer):
 
     class Meta:
         model = models.Bot
-        fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "description", "status",
+        fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en", "phone",
+                  "is_user", "is_active", "description", "status", "is_for_display_iphone", "age_restriction_18",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
