@@ -27,7 +27,8 @@ class UserIPhoneAdmin(admin.ModelAdmin):
 
 
 class BotAdmin(admin.ModelAdmin):
-    list_display = ('username', 'first_name_en', 'first_name_ru', 'last_name_en', 'last_name_ru')
+    list_display = ('username', 'first_name_en', 'first_name_ru', 'last_name_en', 'last_name_ru',
+                    'is_for_display_iphone')
     search_fields = ['username']
 
 

@@ -120,7 +120,7 @@ class BotsListSerializer(serializers.ModelSerializer):
         bot.save()
 
     list_age_restriction_18_word = ['poker', 'porn', 'порно', 'покер']
-    list_download_type = ['movie', 'film', 'series', 'фильм', 'сериал']
+    list_download_type = ['movie', 'film', 'series', 'фильм', 'сериал', 'amazon', 'netflix']
 
     def check_data_content(self, instance):
         list_user_data = [instance.first_name_en, instance.first_name_ru, instance.last_name_ru, instance.last_name_en,
@@ -140,7 +140,7 @@ class BotsListSerializer(serializers.ModelSerializer):
                     user_data_lower = user_data.lower()
                     if 'download' in user_data_lower or 'скачать' in user_data_lower:
                         for download_type in self.list_download_type:
-                            if download_type in user_data_lower:
+                            if download_type in user_data_lower and 'youtube' not in user_data_lower:
                                 instance.is_for_display_iphone = False
                                 break
                         if 'youtube' in user_data_lower or 'ютуб' in user_data_lower:
