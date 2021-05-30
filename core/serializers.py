@@ -84,6 +84,8 @@ class BotsListSerializer(serializers.ModelSerializer):
         if instance.is_active:
             add_to_elastic_bot_model(instance)
         instance.tags = tags
+        self.check_data_content(instance)
+
         instance.save()
         return instance
 
@@ -107,7 +109,7 @@ class BotsListSerializer(serializers.ModelSerializer):
     def add_name_to_tags(self, bot, tags):
         if bot.first_name_en is not None:
             self.update_tags(tags, bot.first_name_en, bot.first_name_en)
-        if bot.first_name_en is not None:
+        if bot.first_name_ru is not None:
             self.update_tags(tags, bot.first_name_ru, bot.first_name_ru)
         if bot.last_name_ru is not None:
             self.update_tags(tags, bot.last_name_ru, bot.last_name_ru)
@@ -117,11 +119,43 @@ class BotsListSerializer(serializers.ModelSerializer):
         bot.tags = tags
         bot.save()
 
+    list_age_restriction_18_word = ['poker', 'porn', 'порно', 'покер']
+    list_download_type = ['movie', 'film', 'series', 'фильм', 'сериал']
+
+    def check_data_content(self, instance):
+        list_user_data = [instance.first_name_en, instance.first_name_ru, instance.last_name_ru, instance.last_name_en,
+                          instance.description_ru, instance.description_en]
+        for user_data in list_user_data:
+            try:
+                user_data_lower = user_data.lower()
+                for age_restriction_18_word in self.list_age_restriction_18_word:
+                    if age_restriction_18_word in user_data_lower:
+                        instance.age_restriction_18 = True
+                        break
+            except Exception:
+                pass
+        if not instance.is_admin_check_content:
+            for user_data in list_user_data:
+                try:
+                    user_data_lower = user_data.lower()
+                    if 'download' in user_data_lower or 'скачать' in user_data_lower:
+                        for download_type in self.list_download_type:
+                            if download_type in user_data_lower:
+                                instance.is_for_display_iphone = False
+                                break
+                        if 'youtube' in user_data_lower or 'ютуб' in user_data_lower:
+                            if 'music' in user_data_lower or 'музык':
+                                instance.is_for_display_iphone = False
+                                break
+                except Exception:
+                    pass
+
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "status", "is_for_display_iphone",
-                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url",)
+                  "phone", "is_user", "is_active", "status", "is_for_display_iphone", "age_restriction_18",
+                  "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru",
+                  "url",)
 
 
 class BotTgSerializer(BotsListSerializer):
@@ -130,6 +164,7 @@ class BotTgSerializer(BotsListSerializer):
     def create(self, validated_data):
         self.bot_username_validation(validated_data["username"])
         bot = models.Bot.objects.create(**validated_data)
+        self.check_data_content(bot)
         user = self.context.get("user")
         bot.user = user
         bot.save()
@@ -160,7 +195,7 @@ class BotTgAdSerializer(BotTgSerializer):
     def get_url(self, bot):
         url = self.generate_url(bot)
         if "?" in url:
-            pattern ='%s&a=%s'
+            pattern = '%s&a=%s'
         else:
             pattern = '%s?a=%s'
         return pattern % (url, self.context.get("ad"))
@@ -177,6 +212,7 @@ class BotsListSerializerIphone(BotsListSerializer):
             raise serializers.ValidationError({"message": "Bot already exist", "code": 4002})
         instance = super().create(validated_data)
         self.add_name_to_tags(instance, json.loads(instance.tags))
+        self.check_data_content(instance)
         if user_tg is None:
             instance.user_iphone = user_iphone
         else:
@@ -198,7 +234,7 @@ class BotsListSerializerIphone(BotsListSerializer):
     class Meta:
         model = models.Bot
         fields = ("id", "username", "first_name_en", "first_name_ru", "last_name_ru", "last_name_en",
-                  "phone", "is_user", "is_active", "status", "is_for_display_iphone",
+                  "phone", "is_user", "is_active", "status", "is_for_display_iphone", "age_restriction_18",
                   "is_ban", "is_deleted", "is_reply", "ready_to_use", "tags", "description_en", "description_ru", "url")
 
 
@@ -304,9 +340,11 @@ class SignInSerializer(serializers.Serializer):
         try:
             user = models.User.objects.get(phone_id=validated_data["phone_id"], deleted=False)
         except models.User.DoesNotExist:
-            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials.", "code": 4011})
+            raise exceptions.AuthenticationFailed(
+                {"message": "Unable to log in with provided credentials.", "code": 4011})
         if not user.check_password(self.validated_data["password"]) or user.deleted:
-            raise exceptions.AuthenticationFailed({"message": "Unable to log in with provided credentials.", "code": 4012})
+            raise exceptions.AuthenticationFailed(
+                {"message": "Unable to log in with provided credentials.", "code": 4012})
         elif not user.is_active:
             raise exceptions.AuthenticationFailed({"message": "User registration is not completed", "code": 4013})
         user.last_login = datetime.datetime.utcnow()
@@ -319,4 +357,3 @@ class UserDataSerializer(serializers.ModelSerializer):
     class Meta:
         model = models.User
         fields = ("first_name", "last_name", "phone_id", "language", "notification", "registration_id")
-

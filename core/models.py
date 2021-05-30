@@ -113,8 +113,10 @@ class Bot(models.Model):
     is_founded = models.BooleanField(default=True, db_index=True)
     is_being_checked = models.BooleanField(default=False)
     add_by_user = models.BooleanField(default=True)
+    is_admin_check_content = models.BooleanField(default=False)
     is_top = models.BooleanField(default=False)
     is_for_display_iphone = models.BooleanField(default=True, db_index=True)
+    age_restriction_18 = models.BooleanField(default=False, db_index=True)
 
     def save(self, *args, **kwargs):
         if self.pk is not None and (not self.is_active or not self.ready_to_use):
