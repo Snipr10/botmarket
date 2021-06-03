@@ -60,21 +60,21 @@ def add_to_elastic(id, tags, description_ru, description_en):
         print(e)
 
 
-def search_elastic(keys, from_, size, language=["en", "ru"], attempt=0):
+def search_elastic(keys, from_, size, display_restrictions=False, language=["en", "ru"], attempt=0):
     ids = []
     count = 0
     try:
-        res = es.search(index=index, body=create_search(keys, language), from_=from_, size=size)
+        res = es.search(index=index, body=create_search(keys, language, display_restrictions), from_=from_, size=size)
         for r in res['hits']['hits']:
             ids.append(int(r['_id']))
         count = res['hits']['total']['value']
     except Exception:
         if attempt == 0:
-            return search_elastic(keys, from_, size, language, 1)
+            return search_elastic(keys, from_, size, display_restrictions, language, 1)
     return ids, count
 
 
-def create_search(keys, language):
+def create_search(keys, language, display_restrictions):
     must = []
     for key in keys:
         must.append({"bool": {"should": [{
@@ -92,6 +92,9 @@ def create_search(keys, language):
             }
         }]}})
         must.append({'match': {'language': {'query': str(language)}}})
+        if display_restrictions:
+            must.append({'match': {'iphone_display': {'query': True}}})
+
     return {"query": {
         "bool": {
             "must": must

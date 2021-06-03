@@ -156,7 +156,7 @@ class SearchAbstract(generics.GenericAPIView):
     queryset_bot = models.Bot.objects.filter(is_active=True, is_ban=False, is_deleted=False, ready_to_use=True)
     queryset_user = models.UserTg.objects.filter(is_active=True, is_ban=False, is_deleted=False)
 
-    def result_data(self, data):
+    def result_data(self, data, display_restrictions):
         tags = json.loads(data["tags"])
         try:
             start = int(data["start"])
@@ -168,7 +168,7 @@ class SearchAbstract(generics.GenericAPIView):
             language = json.loads(data['language'])
         except Exception:
             language = ["en", "ru"]
-        ids, count = search_elastic(tags, start, end - start + 1, language)
+        ids, count = search_elastic(tags, start, end - start + 1, display_restrictions, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
         return res, count, tags, start, end
@@ -191,7 +191,7 @@ class Search(SearchAbstract):
             language = json.loads(request.data['language'])
         except Exception:
             language = ["en", "ru"]
-        ids, count = search_elastic(tags, start, end - start + 1, language)
+        ids, count = search_elastic(tags, start, end - start + 1, False, language)
         res = list(self.queryset_bot.filter(id__in=ids))
         sort(res, ids)
         models.Search.objects.create(tags=tags, start=start, end=end, usertg=user, count=count)
@@ -303,7 +303,7 @@ class SearchIphone(SearchAbstract):
 
     def get(self, request, *args, **kwargs):
         user = request.user
-        res, count, tags, start, end = self.result_data(request.query_params)
+        res, count, tags, start, end = self.result_data(request.query_params, True)
         models.Search.objects.create(tags=tags, start=start, end=end, user=user, count=count)
         # to test
         # res = models.Bot.objects.all()
